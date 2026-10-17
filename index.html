@@ -41,6 +41,7 @@ main{flex:1;display:grid;grid-template-columns:380px 1fr;min-height:0}
 .meta{margin:7px 0 9px;display:grid;gap:2px;font-size:.85rem;line-height:1.4}
 .meta .pan{color:var(--text);font-weight:600}
 .meta .loc{color:var(--muted)}
+.meta .rate{color:var(--c);font-weight:600}
 .gm{color:var(--c);font-size:.88rem;font-weight:600;text-decoration:none}
 .gm:hover{text-decoration:underline}
 .empty{color:var(--muted);padding:24px 8px;text-align:center;line-height:1.5}
@@ -97,7 +98,6 @@ main{flex:1;display:grid;grid-template-columns:380px 1fr;min-height:0}
 </main>
 
 <script>
-/* Load Leaflet with fallbacks, then start the app */
 (function(){
   var urls = [
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js",
@@ -121,21 +121,19 @@ main{flex:1;display:grid;grid-template-columns:380px 1fr;min-height:0}
 })();
 
 function init(){
-  /* To use an exact Google Maps share link for a beach, add:  url:"https://maps.app.goo.gl/..."  */
   var BEACHES = [
-    {id:1,name:"Periyambalam Beach",cat:"Underrated",lat:10.7012,lng:75.9585,area:"Punnayurkulam, Chavakkad",panchayat:"Punnayurkulam Grama Panchayat"},
-    {id:2,name:"Chavakkad Beach",cat:"Popular",lat:10.5685,lng:76.0133,area:"Chavakkad Azhimukham",panchayat:"Chavakkad Municipality"},
-    {id:3,name:"Chettuva Beach",cat:"Underrated",lat:10.5180,lng:76.0350,area:"Engandiyur / Chettuva Estuary",panchayat:"Engandiyur Grama Panchayat"},
-    {id:4,name:"Vadanappally Beach",cat:"Underrated",lat:10.4610,lng:76.0642,area:"Vadanappally Coast",panchayat:"Vadanappally Grama Panchayat"},
-    {id:5,name:"Snehatheeram Beach",cat:"Popular",lat:10.4361,lng:76.0813,area:"Thalikulam, Nattika",panchayat:"Nattika Grama Panchayat"},
+    {id:1,name:"Periyambalam Beach",cat:"Underrated",lat:10.6813,lng:75.9589,area:"Kadikkad, Chavakkad",panchayat:"Punnayurkulam Grama Panchayat",rating:4.3,reviews:468,url:"https://maps.google.com/?cid=5466773428853257050"},
+    {id:2,name:"Chavakkad Beach",cat:"Popular",lat:10.5720,lng:76.0075,area:"Chavakkad Azhimukham",panchayat:"Chavakkad Municipality",rating:4.3,reviews:4433,url:"https://maps.google.com/?cid=1855458900904777049"},
+    {id:3,name:"Chettuva Beach",cat:"Underrated",lat:10.5084,lng:76.0388,area:"Engandiyur / Chettuva Azhimugam",panchayat:"Engandiyur Grama Panchayat",rating:4.5,reviews:128,url:"https://maps.google.com/?cid=13690454583236783903"},
+    {id:4,name:"Vadanappally Beach",cat:"Underrated",lat:10.4634,lng:76.0629,area:"Vadanappally Coast",panchayat:"Vadanappally Grama Panchayat",rating:4.5,reviews:639,url:"https://maps.google.com/?cid=14622764997451567284"},
+    {id:5,name:"Snehatheeram Beach",cat:"Popular",lat:10.4330,lng:76.0768,area:"Thalikulam, Nattika",panchayat:"Nattika Grama Panchayat",rating:4.3,reviews:17763,url:"https://maps.google.com/?cid=13503565200156329860"},
     {id:6,name:"Valappad Beach",cat:"Underrated",lat:10.4200,lng:76.0820,area:"Valappad Coast",panchayat:"Valappad Grama Panchayat"},
-    {id:7,name:"Nattika Beach",cat:"Popular",lat:10.4080,lng:76.0880,area:"Nattika Beach Road",panchayat:"Nattika Grama Panchayat"},
+    {id:7,name:"Nattika Beach",cat:"Popular",lat:10.4131,lng:76.0849,area:"Nattika Beach Road",panchayat:"Nattika Grama Panchayat",rating:4.4,reviews:2283,url:"https://maps.google.com/?cid=5826555499118109499"},
     {id:8,name:"Kaipamangalam Beach",cat:"Underrated",lat:10.3015,lng:76.1265,area:"Kaipamangalam Shoreline",panchayat:"Kaipamangalam Grama Panchayat"},
-    {id:9,name:"Munakkal Beach",cat:"Popular",lat:10.1806,lng:76.1629,area:"Azhikode, Kodungallur",panchayat:"Eriyad Grama Panchayat"}
+    {id:9,name:"Munakkal Beach",cat:"Popular",lat:10.1807,lng:76.1632,area:"Azhikode, Kodungallur",panchayat:"Eriyad Grama Panchayat",rating:4.5,reviews:2690,url:"https://maps.google.com/?cid=7894799236916750614"}
   ];
   var COLORS = {Popular:"#22d3ee",Underrated:"#f59e0b"};
   function cls(b){ return b.cat === "Popular" ? "T" : "A"; }
-  /* Place-name search centred on the beach: opens the Google listing with photos and reviews */
   function gmap(b){
     if (b.url) return b.url;
     var q = encodeURIComponent(b.name + " Thrissur Kerala").replace(/%20/g, "+");
@@ -143,7 +141,8 @@ function init(){
   }
   function esc(s){ return s.replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function metaHtml(b){
-    return '<div class="meta"><span class="pan">'+esc(b.panchayat)+'</span><span class="loc">'+esc(b.area)+'</span></div>';
+    var r = b.rating ? '<span class="rate">★ '+b.rating.toFixed(1)+' ('+b.reviews.toLocaleString("en-IN")+' Google reviews)</span>' : '';
+    return '<div class="meta"><span class="pan">'+esc(b.panchayat)+'</span><span class="loc">'+esc(b.area)+'</span>'+r+'</div>';
   }
 
   var map = L.map("map",{zoomControl:true});
