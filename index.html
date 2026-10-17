@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="lib/leaflet.css">
 <style>
 :root{--ink:#12303a;--muted:#5b7077;--bg:#eef3f2;--panel:#fff;--line:#d3dedc;--pop:#1d6d8c;--hid:#c4851a;--yes:#2f7d4f;--no:#b23a3a;--unk:#8a9a9e}
 *{box-sizing:border-box}
@@ -70,39 +70,44 @@ footer{color:var(--muted);font-size:13px;margin-top:28px}
   <section>
     <h2>Notes on the data</h2>
     <ul class="notes">
-      <li>Coordinates are approximate, placed from general knowledge of the coastline. Confirm each one on site with GPS and edit <code>lat</code> and <code>lng</code> in <code>BEACHES</code>.</li>
-      <li>"Popular" and "underrated" are qualitative labels for planning. Replace them with the district's own footfall figures (DTPC counts, panchayat records) when available.</li>
+      <li>Coordinates marked "official" come from the Kerala Tourism listings for Chavakkad and Snehatheeram. The rest are estimates from the coastline and must be confirmed on site with GPS (edit <code>lat</code> and <code>lng</code> in <code>BEACHES</code>).</li>
+      <li>"Popular" and "underrated" are qualitative labels. Replace them with the district’s footfall figures (DTPC counts, panchayat records) when available. Beach names and the list itself should be confirmed with DTPC Thrissur.</li>
       <li>The monsoon months (roughly June to September) bring rough seas and rip currents along the Kerala coast. Check current IMD and KSDMA advisories before opening any beach for visitors.</li>
     </ul>
   </section>
   <footer>Map data &copy; OpenStreetMap contributors. Built with Leaflet.</footer>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="lib/leaflet.js"></script>
+<script>if(typeof L==="undefined"){document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>')}</script>
 <script>
 /* ---- EDIT HERE: one object per beach ---- */
 const BEACHES = [
-  {id:"snehatheeram", name:"Snehatheeram (Nattika)", area:"Nattika", lat:10.400, lng:76.090, type:"popular",
-   note:"Long, wide stretch popular for sunset visits and family outings. Close to Thrissur town, so it sees the heaviest weekend crowds in the district.",
-   action:"Crowd management on weekends and holidays; lifeguard cover."},
-  {id:"chavakkad", name:"Chavakkad Beach", area:"Chavakkad", lat:10.573, lng:76.004, type:"popular",
-   note:"Well-known town beach with a steady local and tourist footfall, near Guruvayur pilgrim traffic.",
+  /* coord: "official" = Kerala Tourism listing, "approx" = estimate, confirm on site */
+  {id:"chavakkad", name:"Chavakkad Beach", area:"Chavakkad", lat:10.5685, lng:76.0133, coord:"official", type:"popular",
+   note:"Known for Azhimukham, where the river meets the sea, with a lighthouse nearby and a busy evening fish market. The Blangad stretch adjoins it.",
    action:"Sea-safety signage, lighting and waste handling."},
-  {id:"blangad", name:"Blangad Beach", area:"Chavakkad / Guruvayur", lat:10.596, lng:76.001, type:"popular",
-   note:"Quieter neighbour of Chavakkad Beach, used for evening walks and local events.",
-   action:"Shared patrol and lifeguard plan with Chavakkad."},
-  {id:"vadanappally", name:"Vadanappally Beach", area:"Vadanappally", lat:10.450, lng:76.075, type:"underrated",
-   note:"Calm, uncrowded shoreline with room for low-impact tourism. Few visitors from outside the area.",
-   action:"Access road, parking and basic amenities before promotion."},
-  {id:"chettuva", name:"Chettuva Beach", area:"Chettuva", lat:10.520, lng:76.042, type:"underrated",
-   note:"Fishing-community coast near the Chettuva estuary and backwaters; could pair beach visits with backwater experiences.",
-   action:"Community-led visitor plan; safe landing and viewing points."},
-  {id:"kaipamangalam", name:"Kaipamangalam Beach", area:"Kaipamangalam", lat:10.300, lng:76.120, type:"underrated",
-   note:"Quiet southern beach with minimal development, within reach of Kodungallur's heritage sites.",
-   action:"Survey of access, safety and cleanliness; link to heritage circuit."},
-  {id:"azheekode", name:"Azheekode (Munakkal) Beach", area:"Azheekode", lat:10.198, lng:76.169, type:"underrated",
-   note:"Southernmost beach of the district, near the Muziris heritage area and the Azheekode lighthouse.",
-   action:"Include in Muziris tourism circuit; add signage and parking."}
+  {id:"snehatheeram", name:"Snehatheeram Beach", area:"Thalikulam", lat:10.4361, lng:76.0813, coord:"official", type:"popular",
+   note:"Well-maintained beach with a park beside it, known for sunsets and evening events. Crowded on weekends.",
+   action:"Weekend crowd management and lifeguard cover."},
+  {id:"nattika", name:"Nattika Beach", area:"Nattika", lat:10.405, lng:76.097, coord:"approx", type:"popular",
+   note:"Wide beach tied to the film Chemmeen, with an annual January beach festival and several Ayurveda resorts.",
+   action:"Festival-season crowd and traffic plan; confirm exact location."},
+  {id:"munakkal", name:"Munakkal (Azheekode) Beach", area:"Eriyad / Azheekode", lat:10.1807, lng:76.162, coord:"approx", type:"popular",
+   note:"Southernmost beach of the district, close to the Azheekode estuary and the Muziris heritage area.",
+   action:"Link to the Muziris heritage circuit; parking and signage."},
+  {id:"valappad", name:"Valappad Beach", area:"Valappad", lat:10.420, lng:76.088, coord:"approx", type:"underrated",
+   note:"Wide, shallow shoreline in a working fishing village, about 24 km from Thrissur town. Lists as unexplored by Kerala Tourism.",
+   action:"Basic visitor amenities and safe-bathing markers before promotion."},
+  {id:"vadanappally", name:"Vadanappally Beach", area:"Vadanappally", lat:10.465, lng:76.066, coord:"approx", type:"underrated",
+   note:"Calm, uncrowded shoreline about 9 km from Valappad, with ample parking space but few facilities.",
+   action:"Public toilets and accessible access paths."},
+  {id:"kaipamangalam", name:"Kaipamangalam Beach", area:"Kaipamangalam", lat:10.300, lng:76.128, coord:"approx", type:"underrated",
+   note:"Local fishing coastline in Kodungallur taluk with minimal development.",
+   action:"Confirm the access point and survey safety and cleanliness."},
+  {id:"periyambalam", name:"Periyambalam Beach", area:"Punnayurkulam", lat:10.700, lng:75.975, coord:"approx", type:"underrated",
+   note:"Little-visited stretch near the northern border of the district, close to Malappuram.",
+   action:"Confirm the access point; basic safety signage."}
 ];
 /* ----------------------------------------- */
 
@@ -123,7 +128,7 @@ if(HAS_MAP){
     markers[b.id]=m;
   });
 }else{
-  document.getElementById("map").innerHTML="<p style='padding:16px'>The map could not load. Check your internet connection and reload. The beach list still works.</p>";
+  document.getElementById("map").innerHTML="<p style='padding:16px'>The map library could not load. Keep the lib folder next to index.html, open the page through a web server or GitHub Pages, and check your internet connection. The beach list still works.</p>";
 }
 
 function visible(){return BEACHES.filter(b=>filter==="all"||b.type===filter)}
@@ -140,7 +145,7 @@ function renderList(){
   el.innerHTML=visible().map(b=>`
     <button class="card ${b.type==="underrated"?"hid":""}" data-id="${b.id}" ${current===b.id?'aria-current="true"':""}>
       <h3>${b.name}<span class="tag ${b.type==="underrated"?"hid":""}">${b.type==="popular"?"Popular":"Underrated"}</span></h3>
-      <small>${b.area} &middot; ${b.lat.toFixed(3)}, ${b.lng.toFixed(3)}</small>
+      <small>${b.area} &middot; ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} &middot; ${b.coord==="official"?"official coordinates":"approximate, verify"}</small>
       <p>${b.note}</p>
       <p><b>Priority:</b> ${b.action}</p>
     </button>`).join("");
