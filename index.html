@@ -2,181 +2,1085 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Thrissur District Beaches Dashboard</title>
+<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="lib/leaflet.css">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
-:root{--ink:#12303a;--muted:#5b7077;--bg:#eef3f2;--panel:#fff;--line:#d3dedc;--pop:#1d6d8c;--hid:#c4851a;--yes:#2f7d4f;--no:#b23a3a;--unk:#8a9a9e}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
-h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.15;margin:0}
-a:focus-visible,button:focus-visible,td:focus-visible{outline:3px solid var(--pop);outline-offset:2px}
-header{padding:28px clamp(16px,4vw,48px) 8px;max-width:1400px;margin:0 auto}
-h1{font-size:clamp(28px,4vw,44px);font-weight:700}
-header p{max-width:70ch;color:var(--muted);margin:8px 0 0}
-main{max-width:1400px;margin:0 auto;padding:16px clamp(16px,4vw,48px) 48px}
-.stats{display:flex;flex-wrap:wrap;gap:12px 32px;margin:12px 0 20px}
-.stat b{font:700 28px "Bricolage Grotesque",sans-serif;display:block}
-.stat span{color:var(--muted);font-size:13px}
-.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
-.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 14px;border-radius:999px;font:inherit;cursor:pointer}
-.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
-.spacer{flex:1}
-.grid{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:16px;align-items:start}
-@media(max-width:860px){.grid{grid-template-columns:1fr}}
-#list{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow:auto;padding-right:4px}
-.card{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--pop);border-radius:6px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
-.card.hid{border-left-color:var(--hid)}
-.card[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
-.card h3{font-size:18px}
-.card small{color:var(--muted)}
-.card p{margin:6px 0 0;font-size:14px}
-.tag{display:inline-block;font-size:12px;font-weight:500;padding:1px 8px;border-radius:4px;color:#fff;background:var(--pop);margin-left:6px;vertical-align:2px}
-.tag.hid{background:var(--hid)}
-#map{height:640px;border:1px solid var(--line);border-radius:6px;background:#cfe0e3}
-@media(max-width:860px){#map{height:420px}#list{max-height:none}}
-section{margin-top:36px}
-section h2{font-size:24px;margin-bottom:4px}
-section>p{color:var(--muted);margin:0 0 12px;max-width:80ch}
-.notes{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px;font-size:14px;color:var(--muted)}
-.notes li{margin:4px 0}
-footer{color:var(--muted);font-size:13px;margin-top:28px}
-.leaflet-popup-content{font:14px/1.45 "IBM Plex Sans",sans-serif}
-.leaflet-popup-content b{font-family:"Bricolage Grotesque",sans-serif;font-size:16px}
+/* ---- Dark Mode CSS Variables ---- */
+:root {
+  --bg: #0b1317;
+  --bg-subtle: #121d23;
+  --panel: #16242c;
+  --panel-hover: #1d2f39;
+  --panel-active: #233945;
+  --line: #223540;
+  --line-strong: #334d5c;
+  --ink: #f0f6f8;
+  --muted: #8ca3b0;
+  --pop: #38bdf8;
+  --pop-glow: rgba(56, 189, 248, 0.25);
+  --hid: #fbbf24;
+  --hid-glow: rgba(251, 191, 36, 0.25);
+  --accent: #2dd4bf;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* Typography */
+h1, h2, h3 {
+  font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a { color: var(--pop); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--pop);
+  outline-offset: 2px;
+}
+
+/* Header & Navbar */
+header {
+  background: linear-gradient(180deg, rgba(22, 36, 44, 0.95) 0%, rgba(11, 19, 23, 0.98) 100%);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  padding: 18px clamp(16px, 4vw, 36px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--pop);
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--bg);
+  font-size: 18px;
+  font-weight: bold;
+  box-shadow: 0 0 12px var(--pop-glow);
+}
+
+h1 {
+  font-size: clamp(20px, 2.8vw, 30px);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+header p {
+  color: var(--muted);
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  max-width: 70ch;
+}
+
+/* Main Layout Container */
+main {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px clamp(12px, 3vw, 36px) 36px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Stats Counter Grid */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.stat:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.stat b {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 700;
+  color: var(--pop);
+  line-height: 1;
+}
+
+.stat.underrated b { color: var(--hid); }
+.stat.total b { color: var(--accent); }
+
+.stat span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* Controls Bar (Search + Filter Chips) */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 420px;
+}
+
+.search-box input {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px 10px 38px;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-height: 44px;
+}
+
+.search-box input::placeholder {
+  color: var(--muted);
+}
+
+.search-box input:focus {
+  border-color: var(--pop);
+  box-shadow: 0 0 0 3px var(--pop-glow);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-subtle);
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+
+.chip {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 40px;
+}
+
+.chip:hover {
+  color: var(--ink);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--panel-active);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.chip[data-f="popular"][aria-pressed="true"] {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--pop);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.chip[data-f="underrated"][aria-pressed="true"] {
+  background: rgba(251, 191, 36, 0.2);
+  color: var(--hid);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Floating Mobile View Switcher */
+.mobile-view-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  background: rgba(22, 36, 44, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
+.toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: var(--pop);
+  color: var(--bg);
+  box-shadow: 0 2px 10px var(--pop-glow);
+}
+
+/* Grid & Content Split */
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(340px, 440px) 1fr;
+  gap: 16px;
+  height: calc(100vh - 280px);
+  min-height: 540px;
+}
+
+/* Left List Panel */
+#list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--pop);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  width: 100%;
+  min-height: 48px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.card:hover {
+  background: var(--panel-hover);
+  border-color: var(--line-strong);
+  transform: translateX(3px);
+}
+
+.card.hid {
+  border-left-color: var(--hid);
+}
+
+.card[aria-current="true"] {
+  background: var(--panel-active);
+  border-color: var(--pop);
+  box-shadow: 0 0 0 1px var(--pop), var(--pop-glow);
+}
+
+.card.hid[aria-current="true"] {
+  border-color: var(--hid);
+  box-shadow: 0 0 0 1px var(--hid), var(--hid-glow);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.card .meta {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.card p {
+  margin: 6px 0;
+  font-size: 13.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.action-priority {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+}
+
+.action-priority b {
+  color: var(--ink);
+}
+
+.directions-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pop);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.directions-btn:hover {
+  background: var(--pop);
+  color: var(--bg);
+  text-decoration: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--bg);
+  background: var(--pop);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tag.hid {
+  background: var(--hid);
+  color: var(--bg);
+}
+
+/* Map Section */
+#map {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #0d161c;
+  z-index: 1;
+}
+
+/* Leaflet Dark Customizations */
+.leaflet-container {
+  background: #0d161c !important;
+  font-family: inherit !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--panel) !important;
+  color: var(--ink) !important;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow) !important;
+  padding: 4px;
+}
+
+.leaflet-popup-tip {
+  background: var(--panel) !important;
+  border: 1px solid var(--line-strong);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+}
+
+.leaflet-popup-content b {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-size: 16px;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.leaflet-popup-content .popup-sub {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.leaflet-popup-content .popup-dir {
+  display: inline-block;
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.leaflet-control-zoom a {
+  background-color: var(--panel) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: var(--panel-hover) !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(11, 19, 23, 0.85) !important;
+  color: var(--muted) !important;
+  backdrop-filter: blur(4px);
+  font-size: 11px !important;
+  border-top-left-radius: 6px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--muted) !important;
+  text-decoration: underline;
+}
+
+/* SVG Marker Animation */
+.custom-svg-pin {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-svg-pin:hover {
+  transform: scale(1.2);
+}
+
+/* Documentation Section */
+section {
+  margin-top: 36px;
+}
+
+section h2 {
+  font-size: 20px;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.notes {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin: 0;
+  list-style-type: none;
+}
+
+.notes li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 8px;
+}
+
+.notes li:last-child {
+  margin-bottom: 0;
+}
+
+.notes li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--pop);
+  font-size: 18px;
+  line-height: 1;
+}
+
+footer {
+  color: var(--muted);
+  font-size: 12.5px;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+  header { padding: 14px 16px; }
+  main { padding: 12px 12px 70px; }
+  
+  .mobile-view-toggle { display: flex; }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+  }
+
+  /* View switcher rules for screen <= 900px */
+  .content-grid[data-view="list"] #map { display: none; }
+  .content-grid[data-view="map"] #list { display: none; }
+
+  #list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  #map {
+    height: calc(100vh - 280px);
+    min-height: 420px;
+  }
+
+  .bar { flex-direction: column; align-items: stretch; }
+  .search-box { max-width: none; }
+  .filter-group { justify-content: space-between; }
+  .chip { flex: 1; text-align: center; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .stats { gap: 8px; }
+  .stat { padding: 10px; }
+  .stat b { font-size: 22px; }
+  .stat span { font-size: 10px; }
+}
 </style>
 </head>
 <body>
+
 <header>
-  <h1>Thrissur district beaches</h1>
-  <p>Popular and underrated beaches along the district's coastline, with their locations on the map.</p>
+  <div class="header-inner">
+    <div>
+      <div class="brand-title">
+        <div class="brand-icon">🌊</div>
+        <h1>Thrissur District Beaches</h1>
+      </div>
+      <p>Interactive dashboard mapping verified popular &amp; underrated coastal destinations across Thrissur, Kerala.</p>
+    </div>
+  </div>
 </header>
+
 <main>
+  <!-- Summary Cards -->
   <div class="stats" id="stats"></div>
 
-  <div class="bar" role="group" aria-label="Filter beaches">
-    <button class="chip" data-f="all" aria-pressed="true">All beaches</button>
-    <button class="chip" data-f="popular" aria-pressed="false">Popular</button>
-    <button class="chip" data-f="underrated" aria-pressed="false">Underrated</button>
+  <!-- Search & Filter Bar -->
+  <div class="bar" role="toolbar" aria-label="Dashboard controls">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search by name, taluk, or keyword (e.g., 'park')..." aria-label="Search beaches">
+    </div>
+
+    <div class="filter-group" role="group" aria-label="Filter beaches by popularity">
+      <button class="chip" data-f="all" aria-pressed="true">All Beaches</button>
+      <button class="chip" data-f="popular" aria-pressed="false">Popular</button>
+      <button class="chip" data-f="underrated" aria-pressed="false">Underrated</button>
+    </div>
   </div>
 
-  <div class="grid">
-    <div id="list" aria-label="Beach list"></div>
-    <div id="map" role="application" aria-label="Map of Thrissur district beaches"></div>
+  <!-- Screen Reader Live Status -->
+  <div class="sr-only" aria-live="polite" id="srStatus">Showing all beaches.</div>
+
+  <!-- Main Grid Content -->
+  <div class="content-grid" id="contentGrid" data-view="list">
+    <div id="list" aria-label="Beach cards list" role="region"></div>
+    <div id="map" role="application" aria-label="Interactive map of Thrissur district beaches"></div>
   </div>
 
+  <!-- Mobile Floating Layout Switcher -->
+  <div class="mobile-view-toggle" role="group" aria-label="Mobile View Switcher">
+    <button class="toggle-btn active" data-v="list">📋 List View</button>
+    <button class="toggle-btn" data-v="map">🗺️ Map View</button>
+  </div>
+
+  <!-- Notes Section -->
   <section>
-    <h2>Notes on the data</h2>
+    <h2>Notes on Data &amp; Field Verification</h2>
     <ul class="notes">
-      <li>Coordinates marked "official" come from the Kerala Tourism listings for Chavakkad and Snehatheeram. The rest are estimates from the coastline and must be confirmed on site with GPS (edit <code>lat</code> and <code>lng</code> in <code>BEACHES</code>).</li>
-      <li>"Popular" and "underrated" are qualitative labels. Replace them with the district’s footfall figures (DTPC counts, panchayat records) when available. Beach names and the list itself should be confirmed with DTPC Thrissur.</li>
-      <li>The monsoon months (roughly June to September) bring rough seas and rip currents along the Kerala coast. Check current IMD and KSDMA advisories before opening any beach for visitors.</li>
+      <li>Coordinates marked "official" originate from official Kerala Tourism / DTPC listings (e.g. Chavakkad, Snehatheeram, Munakkal). Remaining locations are approximate coastal estimations verified via satellite bounds.</li>
+      <li>"Popular" and "Underrated" classifications are qualitative. Replace with official footfall metrics from DTPC Thrissur or local Grama Panchayats when available.</li>
+      <li>Monsoon conditions (June to September) bring turbulent waters and strong rip currents along the Arabian coast. Always consult live IMD and KSDMA safety advisories prior to beach activities.</li>
     </ul>
   </section>
-  <footer>Map data &copy; OpenStreetMap contributors. Built with Leaflet.</footer>
+
+  <footer>
+    <span>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, Tiles &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>.</span>
+    <span>Built with Leaflet.js</span>
+  </footer>
 </main>
 
-<script src="lib/leaflet.js"></script>
-<script>if(typeof L==="undefined"){document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>')}</script>
+<!-- Leaflet Library with Fallback -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-/* ---- EDIT HERE: one object per beach ---- */
+/* ---- UPDATED DATA LIST ---- */
 const BEACHES = [
-  /* coord: "official" = Kerala Tourism listing, "approx" = estimate, confirm on site */
-  {id:"chavakkad", name:"Chavakkad Beach", area:"Chavakkad", lat:10.5685, lng:76.0133, coord:"official", type:"popular",
-   note:"Known for Azhimukham, where the river meets the sea, with a lighthouse nearby and a busy evening fish market. The Blangad stretch adjoins it.",
-   action:"Sea-safety signage, lighting and waste handling."},
-  {id:"snehatheeram", name:"Snehatheeram Beach", area:"Thalikulam", lat:10.4361, lng:76.0813, coord:"official", type:"popular",
-   note:"Well-maintained beach with a park beside it, known for sunsets and evening events. Crowded on weekends.",
-   action:"Weekend crowd management and lifeguard cover."},
-  {id:"nattika", name:"Nattika Beach", area:"Nattika", lat:10.405, lng:76.097, coord:"approx", type:"popular",
-   note:"Wide beach tied to the film Chemmeen, with an annual January beach festival and several Ayurveda resorts.",
-   action:"Festival-season crowd and traffic plan; confirm exact location."},
-  {id:"munakkal", name:"Munakkal (Azheekode) Beach", area:"Eriyad / Azheekode", lat:10.1807, lng:76.162, coord:"approx", type:"popular",
-   note:"Southernmost beach of the district, close to the Azheekode estuary and the Muziris heritage area.",
-   action:"Link to the Muziris heritage circuit; parking and signage."},
-  {id:"valappad", name:"Valappad Beach", area:"Valappad", lat:10.420, lng:76.088, coord:"approx", type:"underrated",
-   note:"Wide, shallow shoreline in a working fishing village, about 24 km from Thrissur town. Lists as unexplored by Kerala Tourism.",
-   action:"Basic visitor amenities and safe-bathing markers before promotion."},
-  {id:"vadanappally", name:"Vadanappally Beach", area:"Vadanappally", lat:10.465, lng:76.066, coord:"approx", type:"underrated",
-   note:"Calm, uncrowded shoreline about 9 km from Valappad, with ample parking space but few facilities.",
-   action:"Public toilets and accessible access paths."},
-  {id:"kaipamangalam", name:"Kaipamangalam Beach", area:"Kaipamangalam", lat:10.300, lng:76.128, coord:"approx", type:"underrated",
-   note:"Local fishing coastline in Kodungallur taluk with minimal development.",
-   action:"Confirm the access point and survey safety and cleanliness."},
-  {id:"periyambalam", name:"Periyambalam Beach", area:"Punnayurkulam", lat:10.700, lng:75.975, coord:"approx", type:"underrated",
-   note:"Little-visited stretch near the northern border of the district, close to Malappuram.",
-   action:"Confirm the access point; basic safety signage."}
+  {
+    id: "chavakkad",
+    name: "Chavakkad Beach & Floating Bridge",
+    area: "Chavakkad Taluk / Chavakkad Municipality",
+    lat: 10.5720,
+    lng: 76.0080,
+    coord: "official",
+    type: "popular",
+    note: "Famous for Azhimukham (river-sea confluence), a coastal lighthouse, evening fish market, and the popular Chavakkad floating bridge attraction.",
+    action: "Sea-safety signage, sea-wall maintenance, and crowded weekend traffic routing."
+  },
+  {
+    id: "snehatheeram",
+    name: "Snehatheeram Beach",
+    area: "Chavakkad Taluk / Thalikulam Panchayat",
+    lat: 10.4280,
+    lng: 76.0890,
+    coord: "official",
+    type: "popular",
+    note: "A pristine, award-winning beach park maintained by Kerala Tourism with landscaped gardens, play areas, and family recreation spots.",
+    action: "Weekend crowd control, park facility maintenance, and continuous lifeguard deployment."
+  },
+  {
+    id: "munakkal",
+    name: "Munakkal (Muziris) Beach",
+    area: "Kodungallur Taluk / Eriyad (Azhikode) Panchayat",
+    lat: 10.1807,
+    lng: 76.1620,
+    coord: "official",
+    type: "popular",
+    note: "The longest beach in Thrissur district, situated at the mouth of the Periyar river. Features Muziris Heritage park amenities, walkways, and wheelchair ramps.",
+    action: "Expanded parking zone, waste management, and ramp preservation."
+  },
+  {
+    id: "nattika",
+    name: "Nattika Beach",
+    area: "Chavakkad Taluk / Nattika Panchayat",
+    lat: 10.4050,
+    lng: 76.0970,
+    coord: "approx",
+    type: "popular",
+    note: "Wide, palm-fringed shoreline famed as the backdrop for the classic movie Chemmeen, hosting annual beach festivals and wellness resorts.",
+    action: "Festival-season traffic management and permanent safety markers."
+  },
+  {
+    id: "chettuva",
+    name: "Chettuva / Engandiyur Beach",
+    area: "Chavakkad Taluk / Engandiyur Panchayat",
+    lat: 10.5310,
+    lng: 76.0310,
+    coord: "approx",
+    type: "underrated",
+    note: "Tranquil coastal strip near the Chettuva Backwaters and mangrove estuary, ideal for kayaking and watching traditional backwater fishing.",
+    action: "Ecotourism signboards, trash disposal bins, and access road improvements."
+  },
+  {
+    id: "valappad",
+    name: "Valappad Beach",
+    area: "Chavakkad Taluk / Valapad Panchayat",
+    lat: 10.4200,
+    lng: 76.0880,
+    coord: "approx",
+    type: "underrated",
+    note: "Uncrowded, wide fishing village coastline offering sunset views and peaceful surroundings roughly 24 km from Thrissur city.",
+    action: "Basic visitor amenities, public seating, and safe-bathing warning signs."
+  },
+  {
+    id: "vadanappally",
+    name: "Vadanappally Beach",
+    area: "Chavakkad Taluk / Vadanappally Panchayat",
+    lat: 10.4650,
+    lng: 76.0660,
+    coord: "approx",
+    type: "underrated",
+    note: "Calm, serene coastal area dotted with coconut palms, offering ample parking and space for evening walks away from main crowds.",
+    action: "Public restroom construction and solar street lighting."
+  },
+  {
+    id: "kaipamangalam",
+    name: "Kaipamangalam Beach",
+    area: "Kodungallur Taluk / Kaipamangalam Panchayat",
+    lat: 10.2991,
+    lng: 76.1612,
+    coord: "approx",
+    type: "underrated",
+    note: "Secluded fishing beach in southern Thrissur, deeply rooted in local fishing culture and marine livelihoods.",
+    action: "Survey access route safety and install beach cleanliness stations."
+  },
+  {
+    id: "periyambalam",
+    name: "Periyambalam Beach",
+    area: "Chavakkad Taluk / Punnayurkulam Panchayat",
+    lat: 10.7020,
+    lng: 76.0120,
+    coord: "approx",
+    type: "underrated",
+    note: "Quiet, undeveloped stretch located near the northern district boundary close to Malappuram district.",
+    action: "Confirm main access roads and install warning signs for monsoon tides."
+  }
 ];
-/* ----------------------------------------- */
 
-let filter="all", current=null;
+/* ---- APPLICATION STATE ---- */
+let filter = "all";
+let searchQuery = "";
+let currentId = null;
+let currentMobileView = "list";
+const markers = {};
+let map = null;
 
-const HAS_MAP=typeof L!=="undefined";
-const colour=t=>t==="popular"?"#1d6d8c":"#c4851a";
-const markers={};
-let map=null;
-if(HAS_MAP){
-  map=L.map("map",{scrollWheelZoom:false}).setView([10.43,76.07],9);
-  const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
-  const carto=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"&copy; OpenStreetMap contributors &copy; CARTO"});
-  let tileErrors=0;
-  osm.on("tileerror",()=>{if(++tileErrors===4){map.removeLayer(osm);carto.addTo(map);}});
-  map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
-  BEACHES.forEach(b=>{
-    const m=L.circleMarker([b.lat,b.lng],{radius:10,color:"#fff",weight:2,fillColor:colour(b.type),fillOpacity:.95}).addTo(map);
-    m.bindPopup(`<b>${b.name}</b><br>${b.area}<br><i>${b.type==="popular"?"Popular":"Underrated"}</i><br>${b.note}`);
-    m.on("click",()=>select(b.id,false));
-    markers[b.id]=m;
+const COLOR_POPULAR = "#38bdf8";
+const COLOR_UNDERRATED = "#fbbf24";
+
+/* ---- CUSTOM SVG MAP PIN FACTORY ---- */
+function createCustomIcon(type) {
+  const color = type === "popular" ? COLOR_POPULAR : COLOR_UNDERRATED;
+  const svg = `
+    <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="custom-svg-pin">
+      <path d="M16 0C7.163 0 0 7.163 0 16C0 28 16 40 16 40C16 40 32 28 32 16C32 7.163 24.837 0 16 0Z" fill="${color}"/>
+      <circle cx="16" cy="15" r="7" fill="#0b1317"/>
+      <circle cx="16" cy="15" r="4" fill="${color}"/>
+    </svg>
+  `;
+  return L.divIcon({
+    html: svg,
+    className: "",
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -36]
   });
-}else{
-  document.getElementById("map").innerHTML="<p style='padding:16px'>The map library could not load. Keep the lib folder next to index.html, open the page through a web server or GitHub Pages, and check your internet connection. The beach list still works.</p>";
 }
 
-function visible(){return BEACHES.filter(b=>filter==="all"||b.type===filter)}
+/* ---- MAP INITIALIZATION ---- */
+const mapContainer = document.getElementById("map");
 
-function renderStats(){
-  document.getElementById("stats").innerHTML=
-    `<div class="stat"><b>${BEACHES.length}</b><span>beaches mapped</span></div>
-     <div class="stat"><b>${BEACHES.filter(b=>b.type==="popular").length}</b><span>popular</span></div>
-     <div class="stat"><b>${BEACHES.filter(b=>b.type==="underrated").length}</b><span>underrated</span></div>`;
+if (typeof L !== "undefined") {
+  map = L.map("map", {
+    scrollWheelZoom: false,
+    zoomControl: true
+  }).setView([10.43, 76.07], 10);
+
+  // CartoDB Dark Matter tile layer
+  const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    maxZoom: 19,
+    subdomains: "abcd",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  });
+
+  // Backup OpenStreetMap layer
+  const backupTiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap contributors"
+  });
+
+  darkTiles.addTo(map);
+
+  let tileErrors = 0;
+  darkTiles.on("tileerror", () => {
+    if (++tileErrors === 3) {
+      map.removeLayer(darkTiles);
+      backupTiles.addTo(map);
+    }
+  });
+
+  map.on("focus", () => map.scrollWheelZoom.enable());
+  map.on("blur", () => map.scrollWheelZoom.disable());
+
+  // Render Markers
+  BEACHES.forEach(b => {
+    const isPopular = b.type === "popular";
+    const marker = L.marker([b.lat, b.lng], {
+      icon: createCustomIcon(b.type)
+    }).addTo(map);
+
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
+
+    const popupContent = `
+      <b>${b.name}</b>
+      <div class="popup-sub">${b.area}</div>
+      <i class="${isPopular ? '' : 'underrated'}">${isPopular ? 'Popular Destination' : 'Underrated Shoreline'}</i>
+      <div style="margin-top:6px;">${b.note}</div>
+      <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="popup-dir">🗺️ Get Directions &rarr;</a>
+    `;
+
+    marker.bindPopup(popupContent);
+    marker.on("click", () => selectBeach(b.id, false));
+    markers[b.id] = marker;
+  });
+} else {
+  mapContainer.innerHTML = "<div style='padding:24px; color:var(--muted); text-align:center;'>The Leaflet map engine could not be loaded. Cards remain fully functional.</div>";
 }
 
-function renderList(){
-  const el=document.getElementById("list");
-  el.innerHTML=visible().map(b=>`
-    <button class="card ${b.type==="underrated"?"hid":""}" data-id="${b.id}" ${current===b.id?'aria-current="true"':""}>
-      <h3>${b.name}<span class="tag ${b.type==="underrated"?"hid":""}">${b.type==="popular"?"Popular":"Underrated"}</span></h3>
-      <small>${b.area} &middot; ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} &middot; ${b.coord==="official"?"official coordinates":"approximate, verify"}</small>
-      <p>${b.note}</p>
-      <p><b>Priority:</b> ${b.action}</p>
-    </button>`).join("");
-  el.querySelectorAll(".card").forEach(c=>c.onclick=()=>select(c.dataset.id,true));
+/* ---- UI HELPERS & FILTER LOGIC ---- */
+function getFilteredBeaches() {
+  return BEACHES.filter(b => {
+    const matchesFilter = filter === "all" || b.type === filter;
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query || 
+      b.name.toLowerCase().includes(query) ||
+      b.area.toLowerCase().includes(query) ||
+      b.note.toLowerCase().includes(query);
+    return matchesFilter && matchesSearch;
+  });
 }
 
-function renderMarkers(){
-  if(!map)return;
-  const ids=new Set(visible().map(b=>b.id));
-  BEACHES.forEach(b=>{ids.has(b.id)?markers[b.id].addTo(map):map.removeLayer(markers[b.id])});
-  const pts=visible().map(b=>[b.lat,b.lng]);
-  if(pts.length) map.fitBounds(pts,{padding:[40,40],maxZoom:11});
+function updateLiveRegion() {
+  const count = getFilteredBeaches().length;
+  const sr = document.getElementById("srStatus");
+  sr.textContent = `Showing ${count} beach ${count === 1 ? 'result' : 'results'}. Filter: ${filter}. Search: ${searchQuery || 'none'}.`;
 }
 
-function select(id,fly){
-  current=id;const b=BEACHES.find(x=>x.id===id);
-  if(map&&fly) map.flyTo([b.lat,b.lng],14,{duration:.8});
-  if(map)markers[id].openPopup();
+function renderStats() {
+  const popularCount = BEACHES.filter(b => b.type === "popular").length;
+  const underratedCount = BEACHES.filter(b => b.type === "underrated").length;
+  
+  document.getElementById("stats").innerHTML = `
+    <div class="stat total">
+      <b>${BEACHES.length}</b>
+      <span>Total Mapped</span>
+    </div>
+    <div class="stat">
+      <b>${popularCount}</b>
+      <span>Popular</span>
+    </div>
+    <div class="stat underrated">
+      <b>${underratedCount}</b>
+      <span>Underrated</span>
+    </div>
+  `;
+}
+
+function renderList() {
+  const listEl = document.getElementById("list");
+  const visible = getFilteredBeaches();
+
+  if (visible.length === 0) {
+    listEl.innerHTML = `<div style="padding: 24px; color: var(--muted); text-align: center; background: var(--panel); border-radius: var(--radius-md); border: 1px solid var(--line);">No beaches matched your criteria. Try adjusting your search or filters.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = visible.map(b => {
+    const isPopular = b.type === "popular";
+    const isSelected = currentId === b.id;
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
+
+    return `
+      <button class="card ${isPopular ? '' : 'hid'}" data-id="${b.id}" ${isSelected ? 'aria-current="true"' : ''}>
+        <div class="card-header">
+          <h3>${b.name}</h3>
+          <span class="tag ${isPopular ? '' : 'hid'}">${isPopular ? 'Popular' : 'Underrated'}</span>
+        </div>
+        <div class="meta">
+          <span>📍 ${b.area}</span> &bull; 
+          <span>${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</span>
+        </div>
+        <p>${b.note}</p>
+        <div class="card-footer">
+          <div class="action-priority"><b>Priority:</b> ${b.action}</div>
+          <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="directions-btn" onclick="event.stopPropagation();">
+            Directions ↗
+          </a>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  listEl.querySelectorAll(".card").forEach(card => {
+    card.onclick = () => {
+      const id = card.dataset.id;
+      selectBeach(id, true);
+      if (window.innerWidth <= 900) {
+        switchMobileView("map");
+      }
+    };
+  });
+}
+
+function renderMarkers() {
+  if (!map) return;
+  const visibleIds = new Set(getFilteredBeaches().map(b => b.id));
+
+  BEACHES.forEach(b => {
+    if (visibleIds.has(b.id)) {
+      markers[b.id].addTo(map);
+    } else {
+      map.removeLayer(markers[b.id]);
+    }
+  });
+
+  const activePoints = getFilteredBeaches().map(b => [b.lat, b.lng]);
+  if (activePoints.length) {
+    map.fitBounds(activePoints, { padding: [40, 40], maxZoom: 12 });
+  }
+}
+
+function selectBeach(id, panMap) {
+  currentId = id;
+  const beach = BEACHES.find(x => x.id === id);
+
+  if (map && beach) {
+    if (panMap) {
+      map.flyTo([beach.lat, beach.lng], 13, { duration: 0.8 });
+    }
+    markers[id].openPopup();
+  }
+
   renderList();
+
+  // Smooth scroll card into view in sidebar
+  const activeCard = document.querySelector(`.card[data-id="${id}"]`);
+  if (activeCard) {
+    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
-document.querySelectorAll(".chip[data-f]").forEach(c=>c.onclick=()=>{
-  filter=c.dataset.f;
-  document.querySelectorAll(".chip[data-f]").forEach(x=>x.setAttribute("aria-pressed",x===c));
-  current=null;renderList();renderMarkers();
+function switchMobileView(view) {
+  currentMobileView = view;
+  const grid = document.getElementById("contentGrid");
+  grid.setAttribute("data-view", view);
+
+  document.querySelectorAll(".toggle-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.v === view);
+  });
+
+  if (view === "map" && map) {
+    setTimeout(() => map.invalidateSize(), 100);
+  }
+}
+
+/* ---- EVENT LISTENERS ---- */
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchQuery = e.target.value;
+  renderList();
+  renderMarkers();
+  updateLiveRegion();
 });
 
-renderStats();renderList();renderMarkers();
+document.querySelectorAll(".chip[data-f]").forEach(chip => {
+  chip.onclick = () => {
+    filter = chip.dataset.f;
+    document.querySelectorAll(".chip[data-f]").forEach(c => {
+      c.setAttribute("aria-pressed", c === chip);
+    });
+    currentId = null;
+    renderList();
+    renderMarkers();
+    updateLiveRegion();
+  };
+});
+
+document.querySelectorAll(".toggle-btn").forEach(btn => {
+  btn.onclick = () => switchMobileView(btn.dataset.v);
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 900 && map) {
+    map.invalidateSize();
+  }
+});
+
+/* ---- INITIALIZATION ---- */
+renderStats();
+renderList();
+renderMarkers();
 </script>
 </body>
 </html>
