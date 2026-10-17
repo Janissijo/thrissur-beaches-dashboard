@@ -119,7 +119,10 @@ const markers={};
 let map=null;
 if(HAS_MAP){
   map=L.map("map",{scrollWheelZoom:false}).setView([10.43,76.07],9);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"&copy; OpenStreetMap contributors &copy; CARTO"}).addTo(map);
+  const osm=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
+  const carto=L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"&copy; OpenStreetMap contributors &copy; CARTO"});
+  let tileErrors=0;
+  osm.on("tileerror",()=>{if(++tileErrors===4){map.removeLayer(osm);carto.addTo(map);}});
   map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
   BEACHES.forEach(b=>{
     const m=L.circleMarker([b.lat,b.lng],{radius:10,color:"#fff",weight:2,fillColor:colour(b.type),fillOpacity:.95}).addTo(map);
