@@ -2,1250 +2,252 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Thrissur District Beaches Dashboard</title>
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thrissur Coastal Beach Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+  onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'">
 <style>
-/* ---- Dark Mode CSS Variables ---- */
-:root {
-  --bg: #0b1317;
-  --bg-subtle: #121d23;
-  --panel: #16242c;
-  --panel-hover: #1d2f39;
-  --panel-active: #233945;
-  --line: #223540;
-  --line-strong: #334d5c;
-  --ink: #f0f6f8;
-  --muted: #94a3b8;
-  --pop: #38bdf8;
-  --pop-glow: rgba(56, 189, 248, 0.25);
-  --hid: #fbbf24;
-  --hid-glow: rgba(251, 191, 36, 0.25);
-  --accent: #2dd4bf;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-}
-
-/* Custom Scrollbars */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-/* Typography */
-h1, h2, h3 {
-  font-family: "Bricolage Grotesque", system-ui, sans-serif;
-  line-height: 1.3;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-
-a { color: var(--pop); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
-  outline: 2px solid var(--pop);
-  outline-offset: 2px;
-}
-
-/* Header & Navbar */
-header {
-  background: linear-gradient(180deg, rgba(22, 36, 44, 0.95) 0%, rgba(11, 19, 23, 0.98) 100%);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
-  padding: 24px clamp(16px, 4vw, 36px);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.header-inner {
-  max-width: 1600px;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.brand-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--pop);
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  color: var(--bg);
-  font-size: 20px;
-  font-weight: bold;
-  box-shadow: 0 0 12px var(--pop-glow);
-  flex-shrink: 0;
-}
-
-h1 {
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 700;
-  color: var(--ink);
-}
-
-header p {
-  color: var(--muted);
-  margin: 8px 0 0;
-  font-size: 14.5px;
-  line-height: 1.5;
-  max-width: 75ch;
-}
-
-/* Main Layout Container */
-main {
-  max-width: 1600px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 24px clamp(16px, 3vw, 36px) 36px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Stats Counter Grid */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.stat {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.stat:hover {
-  border-color: var(--line-strong);
-  transform: translateY(-2px);
-}
-
-.stat b {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: clamp(24px, 3.2vw, 36px);
-  font-weight: 700;
-  color: var(--pop);
-  line-height: 1;
-}
-
-.stat.underrated b { color: var(--hid); }
-.stat.total b { color: var(--accent); }
-
-.stat span {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Controls Bar (Search + Filter Chips + Map Engine Switcher) */
-.bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  min-width: 260px;
-  max-width: 420px;
-}
-
-.search-box input {
-  width: 100%;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 12px 18px 12px 42px;
-  color: var(--ink);
-  font-family: inherit;
-  font-size: 14.5px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  min-height: 46px;
-}
-
-.search-box input::placeholder {
-  color: var(--muted);
-}
-
-.search-box input:focus {
-  border-color: var(--pop);
-  box-shadow: 0 0 0 3px var(--pop-glow);
-}
-
-.search-icon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted);
-  pointer-events: none;
-  font-size: 16px;
-}
-
-.filter-group {
-  display: flex;
-  gap: 8px;
-  background: var(--bg-subtle);
-  padding: 6px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-}
-
-.chip {
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chip:hover {
-  color: var(--ink);
-}
-
-.chip[aria-pressed="true"] {
-  background: var(--panel-active);
-  color: var(--ink);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.chip[data-f="popular"][aria-pressed="true"] {
-  background: rgba(56, 189, 248, 0.2);
-  color: var(--pop);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-}
-
-.chip[data-f="underrated"][aria-pressed="true"] {
-  background: rgba(251, 191, 36, 0.2);
-  color: var(--hid);
-  border: 1px solid rgba(251, 191, 36, 0.4);
-}
-
-/* Map Provider Config Control */
-.provider-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--line);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13.5px;
-}
-
-.provider-box label {
-  color: var(--muted);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.provider-select {
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  color: var(--ink);
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* Floating Mobile View Switcher */
-.mobile-view-toggle {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1001;
-  background: rgba(22, 36, 44, 0.95);
-  backdrop-filter: blur(16px);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  padding: 6px;
-  box-shadow: var(--shadow);
-}
-
-.toggle-btn {
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  padding: 10px 22px;
-  border-radius: 999px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-
-.toggle-btn.active {
-  background: var(--pop);
-  color: var(--bg);
-  box-shadow: 0 2px 10px var(--pop-glow);
-}
-
-/* Grid & Content Split */
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(380px, 460px) 1fr;
-  gap: 20px;
-  height: calc(100vh - 290px);
-  min-height: 580px;
-}
-
-/* Left List Panel */
-#list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  padding-right: 8px;
-}
-
-.card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-left: 5px solid var(--pop);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-}
-
-.card:hover {
-  background: var(--panel-hover);
-  border-color: var(--line-strong);
-  transform: translateY(-2px);
-}
-
-.card.hid {
-  border-left-color: var(--hid);
-}
-
-.card[aria-current="true"] {
-  background: var(--panel-active);
-  border-color: var(--pop);
-  box-shadow: 0 0 0 1px var(--pop), var(--pop-glow);
-}
-
-.card.hid[aria-current="true"] {
-  border-color: var(--hid);
-  box-shadow: 0 0 0 1px var(--hid), var(--hid-glow);
-}
-
-.card-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.card h3 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1.35;
-}
-
-.card .meta {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.5;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.card .meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.card p {
-  margin: 0;
-  font-size: 14px;
-  color: #cbd5e1;
-  line-height: 1.55;
-}
-
-.card-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 4px;
-  padding-top: 14px;
-  border-top: 1px dashed var(--line);
-}
-
-.action-priority {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.action-priority b {
-  color: var(--ink);
-}
-
-.directions-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--pop);
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  width: fit-content;
-}
-
-.directions-btn:hover {
-  background: var(--pop);
-  color: var(--bg);
-  text-decoration: none;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 999px;
-  color: var(--bg);
-  background: var(--pop);
-  white-space: nowrap;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.tag.hid {
-  background: var(--hid);
-  color: var(--bg);
-}
-
-/* Map Section */
-#map {
-  width: 100%;
-  height: 100%;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: #0d161c;
-  z-index: 1;
-}
-
-/* Leaflet Dark Customizations & Popups */
-.leaflet-container {
-  background: #0d161c !important;
-  font-family: inherit !important;
-}
-
-/* Normal light OSM tiles without dark mode inversion filter */
-.leaflet-tile-pane {
-  filter: none;
-}
-
-.leaflet-popup-content-wrapper {
-  background: var(--panel) !important;
-  color: var(--ink) !important;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow) !important;
-  padding: 6px;
-}
-
-.leaflet-popup-tip {
-  background: var(--panel) !important;
-  border: 1px solid var(--line-strong);
-}
-
-.leaflet-popup-content {
-  margin: 12px 16px !important;
-  font-size: 13.5px !important;
-  line-height: 1.55 !important;
-  min-width: 240px;
-  max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.popup-title {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1.3;
-}
-
-.popup-sub {
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.4;
-}
-
-.popup-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  width: fit-content;
-}
-
-.popup-badge.popular {
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--pop);
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.popup-badge.underrated {
-  background: rgba(251, 191, 36, 0.15);
-  color: var(--hid);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
-.popup-note {
-  color: #cbd5e1;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.popup-dir {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--pop);
-  background: rgba(56, 189, 248, 0.1);
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  width: fit-content;
-}
-
-.popup-dir:hover {
-  background: var(--pop);
-  color: var(--bg);
-  text-decoration: none;
-}
-
-.leaflet-control-zoom a {
-  background-color: var(--panel) !important;
-  color: var(--ink) !important;
-  border-color: var(--line) !important;
-}
-
-.leaflet-control-zoom a:hover {
-  background-color: var(--panel-hover) !important;
-}
-
-.leaflet-control-attribution {
-  background: rgba(11, 19, 23, 0.85) !important;
-  color: var(--muted) !important;
-  backdrop-filter: blur(4px);
-  font-size: 11px !important;
-  border-top-left-radius: 6px;
-}
-
-.leaflet-control-attribution a {
-  color: var(--muted) !important;
-  text-decoration: underline;
-}
-
-/* SVG Marker Animation */
-.custom-svg-pin {
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.custom-svg-pin:hover {
-  transform: scale(1.2);
-}
-
-/* Documentation Section */
-section {
-  margin-top: 16px;
-}
-
-section h2 {
-  font-size: 20px;
-  margin-bottom: 12px;
-  color: var(--ink);
-}
-
-.notes {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-  font-size: 14px;
-  line-height: 1.65;
-  color: var(--muted);
-  margin: 0;
-  list-style-type: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.notes li {
-  position: relative;
-  padding-left: 22px;
-}
-
-.notes li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: var(--pop);
-  font-size: 20px;
-  line-height: 1;
-  top: -1px;
-}
-
-footer {
-  color: var(--muted);
-  font-size: 13px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  border: 0;
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 900px) {
-  header { padding: 18px 16px; }
-  main { padding: 16px 16px 80px; gap: 16px; }
-  
-  .mobile-view-toggle { display: flex; }
-
-  .content-grid {
-    grid-template-columns: 1fr;
-    height: auto;
-    min-height: 0;
-  }
-
-  .content-grid[data-view="list"] #map { display: none; }
-  .content-grid[data-view="map"] #list { display: none; }
-
-  #list {
-    max-height: none;
-    overflow: visible;
-    padding-right: 0;
-  }
-
-  #map {
-    height: calc(100vh - 280px);
-    min-height: 440px;
-  }
-
-  .bar { flex-direction: column; align-items: stretch; }
-  .search-box { max-width: none; min-width: 0; }
-  .filter-group { justify-content: space-between; }
-  .chip { flex: 1; text-align: center; justify-content: center; }
-  .provider-box { justify-content: space-between; }
-}
-
-@media (max-width: 480px) {
-  .stats { gap: 10px; }
-  .stat { padding: 12px 14px; }
-  .stat b { font-size: 22px; }
-  .stat span { font-size: 11px; }
-}
+:root{
+  --bg:#0a141d; --panel:#101e2a; --panel2:#162735; --line:#24394b;
+  --text:#e8f1f7; --muted:#8fa5b6; --teal:#22d3ee; --amber:#f59e0b;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;overflow:hidden}
+header{padding:14px 18px 12px;background:var(--panel);border-bottom:1px solid var(--line);display:grid;gap:10px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:1.15rem;font-weight:700;letter-spacing:.2px}
+.count{color:var(--muted);font-size:.85rem}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#search{flex:1 1 220px;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:10px 14px;border-radius:10px;font-size:.95rem}
+#search::placeholder{color:var(--muted)}
+#search:focus,.chip:focus-visible,.card:focus-visible,.tab:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.chips{display:flex;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--text);padding:8px 14px;border-radius:999px;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.chip[data-f="Popular"] i{background:var(--teal)}
+.chip[data-f="Underrated"] i{background:var(--amber)}
+.chip.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.tabs{display:none;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tab{flex:1;background:var(--bg);color:var(--muted);border:0;padding:9px;font-size:.9rem;cursor:pointer}
+.tab.on{background:var(--teal);color:#04222a;font-weight:600}
+main{flex:1;display:grid;grid-template-columns:380px 1fr;min-height:0}
+#list{overflow-y:auto;padding:14px;display:grid;gap:10px;align-content:start;background:var(--bg);border-right:1px solid var(--line)}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:12px 14px;cursor:pointer;transition:background .15s,border-color .15s}
+.card:hover,.card.active{background:var(--panel2);border-color:var(--c)}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h2{font-size:1rem;font-weight:600}
+.badge{font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px;color:#06151c;background:var(--c);white-space:nowrap}
+.card p{color:var(--muted);font-size:.86rem;margin:6px 0 8px;line-height:1.4}
+.gm{color:var(--c);font-size:.88rem;font-weight:600;text-decoration:none}
+.gm:hover{text-decoration:underline}
+.empty{color:var(--muted);padding:24px 8px;text-align:center;line-height:1.5}
+#map{height:100%;width:100%;background:#cfe3f2}
+.maperr{padding:30px;color:#0a141d;font-weight:600;line-height:1.5}
+.T{--c:var(--teal)} .A{--c:var(--amber)}
+.bm{display:flex;align-items:center;width:max-content;cursor:pointer}
+.bm svg{flex:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.55));transition:transform .15s}
+.bm .lbl{margin-left:5px;background:var(--bg);color:var(--text);font:600 12px/1 "Segoe UI",system-ui,sans-serif;padding:5px 9px;border-radius:999px;border:2px solid var(--c);white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.bm.active svg{transform:scale(1.35)}
+.bm.active .lbl{background:var(--c);color:#06151c}
+.leaflet-marker-icon.bm-wrap{background:none;border:0}
+.leaflet-popup-content-wrapper{background:var(--panel);color:var(--text);border-radius:12px;border:1px solid var(--line)}
+.leaflet-popup-tip{background:var(--panel)}
+.leaflet-popup-content{margin:14px 16px;min-width:200px}
+.pop h3{font-size:1.02rem;margin-bottom:6px}
+.pop p{color:var(--muted);font-size:.86rem;line-height:1.4;margin:8px 0 10px}
+.pop .gm{display:inline-block;background:var(--c);color:#06151c;padding:8px 12px;border-radius:8px}
+.leaflet-container a.gm{color:#06151c}
+.leaflet-container a.gm:hover{text-decoration:none;filter:brightness(1.1)}
+@media (max-width:760px){
+  .tabs{display:flex}
+  main{display:block;position:relative}
+  #list,#map{position:absolute;inset:0;height:100%;border:0}
+  body[data-view="map"] #list{display:none}
+  body[data-view="list"] #map{visibility:hidden}
+  .chips{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
-<body>
-
+<body data-view="list">
 <header>
-  <div class="header-inner">
-    <div>
-      <div class="brand-title">
-        <div class="brand-icon">🌊</div>
-        <h1>Thrissur District Beaches</h1>
-      </div>
-      <p>Interactive dashboard mapping verified popular &amp; underrated coastal destinations across Thrissur, Kerala.</p>
+  <div class="top">
+    <h1>Thrissur Coastal Beach Dashboard</h1>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search beaches or areas" aria-label="Search beaches">
+    <div class="chips" role="group" aria-label="Filter by category">
+      <button class="chip on" data-f="All">All</button>
+      <button class="chip" data-f="Popular"><i></i>Popular</button>
+      <button class="chip" data-f="Underrated"><i></i>Underrated</button>
     </div>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab on" data-v="list">List</button>
+    <button class="tab" data-v="map">Map</button>
   </div>
 </header>
-
 <main>
-  <!-- Summary Cards -->
-  <div class="stats" id="stats"></div>
-
-  <!-- Search & Filter Bar -->
-  <div class="bar" role="toolbar" aria-label="Dashboard controls">
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="Search by name, taluk, or keyword (e.g., 'park')..." aria-label="Search beaches">
-    </div>
-
-    <div class="filter-group" role="group" aria-label="Filter beaches by popularity">
-      <button class="chip" data-f="all" aria-pressed="true">All Beaches</button>
-      <button class="chip" data-f="popular" aria-pressed="false">Popular</button>
-      <button class="chip" data-f="underrated" aria-pressed="false">Underrated</button>
-    </div>
-
-    <!-- Map Tile Engine Selector -->
-    <div class="provider-box">
-      <label for="providerSelect">Map Tiles:</label>
-      <select id="providerSelect" class="provider-select" aria-label="Select Map Tile Engine">
-        <option value="OSM_DARK">Free OSM (No Key)</option>
-        <option value="MAPTILER_DARK">MapTiler Dark</option>
-        <option value="STADIA_DARK">Stadia Alidade Dark</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Screen Reader Live Status -->
-  <div class="sr-only" aria-live="polite" id="srStatus">Showing all beaches.</div>
-
-  <!-- Main Grid Content -->
-  <div class="content-grid" id="contentGrid" data-view="list">
-    <div id="list" aria-label="Beach cards list" role="region"></div>
-    <div id="map" role="application" aria-label="Interactive map of Thrissur district beaches"></div>
-  </div>
-
-  <!-- Mobile Floating Layout Switcher -->
-  <div class="mobile-view-toggle" role="group" aria-label="Mobile View Switcher">
-    <button class="toggle-btn active" data-v="list">📋 List View</button>
-    <button class="toggle-btn" data-v="map">🗺️ Map View</button>
-  </div>
-
-  <!-- Notes Section -->
-  <section>
-    <h2>Notes on Data &amp; Field Verification</h2>
-    <ul class="notes">
-      <li>Coordinates marked "official" originate from official Kerala Tourism / DTPC listings (e.g. Chavakkad, Snehatheeram, Munakkal). Remaining locations are approximate coastal estimations verified via satellite bounds.</li>
-      <li>"Popular" and "Underrated" classifications are qualitative. Replace with official footfall metrics from DTPC Thrissur or local Grama Panchayats when available.</li>
-      <li>Monsoon conditions (June to September) bring turbulent waters and strong rip currents along the Arabian coast. Always consult live IMD and KSDMA safety advisories prior to beach activities.</li>
-      <li><b>Free API Key Info:</b> Default map uses 100% free OpenStreetMap. To switch to vector dark tiles, get a free key from <a href="https://www.maptiler.com/" target="_blank" rel="noopener">MapTiler</a> (100k requests/mo) or <a href="https://stadiamaps.com/" target="_blank" rel="noopener">Stadia Maps</a> (200k requests/mo) and paste it into <code>MAP_CONFIG</code> in the source code.</li>
-    </ul>
-  </section>
-
-  <footer>
-    <span id="mapAttribution">Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</span>
-    <span>Built with Leaflet.js</span>
-  </footer>
+  <section id="list" aria-label="Beach list"></section>
+  <div id="map" aria-label="Map of Thrissur coastal beaches"></div>
 </main>
 
-<!-- Leaflet Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-/* 
-===================================================================
- MAP CONFIGURATION & API KEYS
-===================================================================
- Choose your provider: "OSM_DARK", "MAPTILER_DARK", or "STADIA_DARK"
- - "OSM_DARK": 100% Free, unlimited, no API key required!
- - "MAPTILER_DARK": Requires free key from maptiler.com
- - "STADIA_DARK": Requires free key from stadiamaps.com
-===================================================================
-*/
-const MAP_CONFIG = {
-  activeProvider: "OSM_DARK", // Default: "OSM_DARK"
-  keys: {
-    MAPTILER_KEY: "YOUR_MAPTILER_API_KEY", // Replace with your MapTiler Key
-    STADIA_KEY: "YOUR_STADIA_API_KEY"      // Replace with your Stadia Maps Key
-  }
-};
-
-/* ---- BEACH DATASET ---- */
-const BEACHES = [
-  {
-    id: "chavakkad",
-    name: "Chavakkad Beach & Floating Bridge",
-    area: "Chavakkad Taluk / Chavakkad Municipality",
-    lat: 10.5720,
-    lng: 76.0080,
-    coord: "official",
-    type: "popular",
-    note: "Famous for Azhimukham (river-sea confluence), a coastal lighthouse, evening fish market, and the popular Chavakkad floating bridge attraction.",
-    action: "Sea-safety signage, sea-wall maintenance, and crowded weekend traffic routing."
-  },
-  {
-    id: "snehatheeram",
-    name: "Snehatheeram Beach",
-    area: "Chavakkad Taluk / Thalikulam Panchayat",
-    lat: 10.4280,
-    lng: 76.0890,
-    coord: "official",
-    type: "popular",
-    note: "A pristine, award-winning beach park maintained by Kerala Tourism with landscaped gardens, play areas, and family recreation spots.",
-    action: "Weekend crowd control, park facility maintenance, and continuous lifeguard deployment."
-  },
-  {
-    id: "munakkal",
-    name: "Munakkal (Muziris) Beach",
-    area: "Kodungallur Taluk / Eriyad (Azhikode) Panchayat",
-    lat: 10.1807,
-    lng: 76.1620,
-    coord: "official",
-    type: "popular",
-    note: "The longest beach in Thrissur district, situated at the mouth of the Periyar river. Features Muziris Heritage park amenities, walkways, and wheelchair ramps.",
-    action: "Expanded parking zone, waste management, and ramp preservation."
-  },
-  {
-    id: "nattika",
-    name: "Nattika Beach",
-    area: "Chavakkad Taluk / Nattika Panchayat",
-    lat: 10.4050,
-    lng: 76.0970,
-    coord: "approx",
-    type: "popular",
-    note: "Wide, palm-fringed shoreline famed as the backdrop for the classic movie Chemmeen, hosting annual beach festivals and wellness resorts.",
-    action: "Festival-season traffic management and permanent safety markers."
-  },
-  {
-    id: "chettuva",
-    name: "Chettuva / Engandiyur Beach",
-    area: "Chavakkad Taluk / Engandiyur Panchayat",
-    lat: 10.5310,
-    lng: 76.0310,
-    coord: "approx",
-    type: "underrated",
-    note: "Tranquil coastal strip near the Chettuva Backwaters and mangrove estuary, ideal for kayaking and watching traditional backwater fishing.",
-    action: "Ecotourism signboards, trash disposal bins, and access road improvements."
-  },
-  {
-    id: "valappad",
-    name: "Valappad Beach",
-    area: "Chavakkad Taluk / Valapad Panchayat",
-    lat: 10.4200,
-    lng: 76.0880,
-    coord: "approx",
-    type: "underrated",
-    note: "Uncrowded, wide fishing village coastline offering sunset views and peaceful surroundings roughly 24 km from Thrissur city.",
-    action: "Basic visitor amenities, public seating, and safe-bathing warning signs."
-  },
-  {
-    id: "vadanappally",
-    name: "Vadanappally Beach",
-    area: "Chavakkad Taluk / Vadanappally Panchayat",
-    lat: 10.4650,
-    lng: 76.0660,
-    coord: "approx",
-    type: "underrated",
-    note: "Calm, serene coastal area dotted with coconut palms, offering ample parking and space for evening walks away from main crowds.",
-    action: "Public restroom construction and solar street lighting."
-  },
-  {
-    id: "kaipamangalam",
-    name: "Kaipamangalam Beach",
-    area: "Kodungallur Taluk / Kaipamangalam Panchayat",
-    lat: 10.3015,
-    lng: 76.1265,
-    coord: "official",
-    type: "underrated",
-    note: "Secluded fishing beach in southern Thrissur, deeply rooted in local fishing culture and marine livelihoods.",
-    action: "Survey access route safety and install beach cleanliness stations."
-  },
-  {
-    id: "periyambalam",
-    name: "Periyambalam Beach",
-    area: "Chavakkad Taluk / Punnayurkulam Panchayat",
-    lat: 10.7012,
-    lng: 75.9585,
-    coord: "official",
-    type: "underrated",
-    note: "Quiet, undeveloped stretch located near the northern district boundary close to Malappuram district.",
-    action: "Confirm main access roads and install warning signs for monsoon tides."
-  }
-];
-
-/* ---- APPLICATION STATE ---- */
-let filter = "all";
-let searchQuery = "";
-let currentId = null;
-let currentMobileView = "list";
-const markers = {};
-let map = null;
-let currentTileLayer = null;
-
-const COLOR_POPULAR = "#38bdf8";
-const COLOR_UNDERRATED = "#fbbf24";
-
-/* ---- CUSTOM SVG MAP PIN FACTORY ---- */
-function createCustomIcon(type) {
-  const color = type === "popular" ? COLOR_POPULAR : COLOR_UNDERRATED;
-  const svg = `
-    <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg" class="custom-svg-pin">
-      <path d="M16 0C7.163 0 0 7.163 0 16C0 28 16 40 16 40C16 40 32 28 32 16C32 7.163 24.837 0 16 0Z" fill="${color}"/>
-      <circle cx="16" cy="15" r="7" fill="#0b1317"/>
-      <circle cx="16" cy="15" r="4" fill="${color}"/>
-    </svg>
-  `;
-  return L.divIcon({
-    html: svg,
-    className: "",
-    iconSize: [32, 40],
-    iconAnchor: [16, 40],
-    popupAnchor: [0, -36]
-  });
-}
-
-/* ---- MAP TILE ENGINE BUILDER WITH FALLBACK ---- */
-function getTileConfiguration(provider) {
-  const mapContainer = document.getElementById("map");
-
-  if (provider === "MAPTILER_DARK") {
-    const key = MAP_CONFIG.keys.MAPTILER_KEY;
-    if (key && key !== "YOUR_MAPTILER_API_KEY") {
-      mapContainer.classList.remove("use-osm-filter");
-      return {
-        url: `https://api.maptiler.com/maps/ch-swisstopo-l2-dark/{z}/{x}/{y}.png?key=${key}`,
-        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      };
+/* Load Leaflet with fallbacks, then start the app */
+(function(){
+  var urls = [
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js",
+    "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js",
+    "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  ], i = 0;
+  function next(){
+    if (window.L) return init();
+    if (i >= urls.length) {
+      document.getElementById("map").innerHTML =
+        '<div class="maperr">The map library could not load. Check your internet connection or allow cdnjs.cloudflare.com, then reload.</div>';
+      return;
     }
-  } else if (provider === "STADIA_DARK") {
-    const key = MAP_CONFIG.keys.STADIA_KEY;
-    if (key && key !== "YOUR_STADIA_API_KEY") {
-      mapContainer.classList.remove("use-osm-filter");
-      return {
-        url: `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${key}`,
-        attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; OpenStreetMap'
-      };
-    }
+    var s = document.createElement("script");
+    s.src = urls[i++];
+    s.onload = function(){ window.L ? init() : next(); };
+    s.onerror = next;
+    document.head.appendChild(s);
   }
+  next();
+})();
 
-  // Fallback: 100% Free OpenStreetMap + CSS Dark Filter
-  mapContainer.classList.add("use-osm-filter");
-  return {
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  };
-}
+function init(){
+  var BEACHES = [
+    {id:1,name:"Periyambalam Beach",cat:"Underrated",lat:10.7012,lng:75.9585,area:"Punnayurkulam, Chavakkad"},
+    {id:2,name:"Chavakkad Beach",cat:"Popular",lat:10.5685,lng:76.0133,area:"Chavakkad Azhimukham"},
+    {id:3,name:"Chettuva Beach",cat:"Underrated",lat:10.5180,lng:76.0350,area:"Engandiyur / Chettuva Estuary"},
+    {id:4,name:"Vadanappally Beach",cat:"Underrated",lat:10.4610,lng:76.0642,area:"Vadanappally Coast"},
+    {id:5,name:"Snehatheeram Beach",cat:"Popular",lat:10.4361,lng:76.0813,area:"Nattika Grama Panchayat"},
+    {id:6,name:"Valappad Beach",cat:"Underrated",lat:10.4200,lng:76.0820,area:"Valappad Coast"},
+    {id:7,name:"Nattika Beach",cat:"Popular",lat:10.4080,lng:76.0880,area:"Nattika Beach Road"},
+    {id:8,name:"Kaipamangalam Beach",cat:"Underrated",lat:10.3015,lng:76.1265,area:"Kaipamangalam Shoreline"},
+    {id:9,name:"Munakkal Beach",cat:"Popular",lat:10.1806,lng:76.1629,area:"Azhikode, Kodungallur"}
+  ];
+  var COLORS = {Popular:"#22d3ee",Underrated:"#f59e0b"};
+  function cls(b){ return b.cat === "Popular" ? "T" : "A"; }
+  function gmap(b){ return "https://www.google.com/maps/search/?api=1&query=" + b.lat + "," + b.lng; }
+  function esc(s){ return s.replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
-function loadMapTiles(provider) {
-  if (!map) return;
-  if (currentTileLayer) {
-    map.removeLayer(currentTileLayer);
-  }
+  var map = L.map("map",{zoomControl:true});
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+  var layer = L.layerGroup().addTo(map);
+  var markers = {};
+  var filter = "All", query = "", activeId = null, popTimer = null;
 
-  const tileConfig = getTileConfiguration(provider);
-  currentTileLayer = L.tileLayer(tileConfig.url, {
-    maxZoom: 19,
-    attribution: tileConfig.attribution
-  });
-
-  // Smooth fallback to OSM Dark if custom API key tiles fail to load
-  currentTileLayer.on("tileerror", () => {
-    if (provider !== "OSM_DARK") {
-      console.warn(`Failed to load ${provider} tiles. Falling back to free OSM Dark Mode.`);
-      loadMapTiles("OSM_DARK");
-      document.getElementById("providerSelect").value = "OSM_DARK";
-    }
-  });
-
-  currentTileLayer.addTo(map);
-}
-
-/* ---- MAP INITIALIZATION ---- */
-const mapContainer = document.getElementById("map");
-
-if (typeof L !== "undefined") {
-  map = L.map("map", {
-    scrollWheelZoom: false,
-    zoomControl: true
-  }).setView([10.43, 76.07], 10);
-
-  loadMapTiles(MAP_CONFIG.activeProvider);
-
-  map.on("focus", () => map.scrollWheelZoom.enable());
-  map.on("blur", () => map.scrollWheelZoom.disable());
-
-  // Render Markers
-  BEACHES.forEach(b => {
-    const isPopular = b.type === "popular";
-    const marker = L.marker([b.lat, b.lng], {
-      icon: createCustomIcon(b.type)
-    }).addTo(map);
-
-    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
-
-    const popupContent = `
-      <div class="popup-title">${b.name}</div>
-      <div class="popup-sub">📍 ${b.area}</div>
-      <div class="popup-badge ${isPopular ? 'popular' : 'underrated'}">${isPopular ? 'Popular Destination' : 'Underrated Shoreline'}</div>
-      <div class="popup-note">${b.note}</div>
-      <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="popup-dir">🗺️ Get Directions &rarr;</a>
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.on("click", () => selectBeach(b.id, false));
-    markers[b.id] = marker;
-  });
-} else {
-  mapContainer.innerHTML = "<div style='padding:24px; color:var(--muted); text-align:center;'>The Leaflet map engine could not be loaded. Cards remain fully functional.</div>";
-}
-
-/* ---- UI HELPERS & FILTER LOGIC ---- */
-function getFilteredBeaches() {
-  return BEACHES.filter(b => {
-    const matchesFilter = filter === "all" || b.type === filter;
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = !query || 
-      b.name.toLowerCase().includes(query) ||
-      b.area.toLowerCase().includes(query) ||
-      b.note.toLowerCase().includes(query);
-    return matchesFilter && matchesSearch;
-  });
-}
-
-function updateLiveRegion() {
-  const count = getFilteredBeaches().length;
-  const sr = document.getElementById("srStatus");
-  sr.textContent = `Showing ${count} beach ${count === 1 ? 'result' : 'results'}. Filter: ${filter}. Search: ${searchQuery || 'none'}.`;
-}
-
-function renderStats() {
-  const popularCount = BEACHES.filter(b => b.type === "popular").length;
-  const underratedCount = BEACHES.filter(b => b.type === "underrated").length;
-  
-  document.getElementById("stats").innerHTML = `
-    <div class="stat total">
-      <b>${BEACHES.length}</b>
-      <span>Total Mapped</span>
-    </div>
-    <div class="stat">
-      <b>${popularCount}</b>
-      <span>Popular</span>
-    </div>
-    <div class="stat underrated">
-      <b>${underratedCount}</b>
-      <span>Underrated</span>
-    </div>
-  `;
-}
-
-function renderList() {
-  const listEl = document.getElementById("list");
-  const visible = getFilteredBeaches();
-
-  if (visible.length === 0) {
-    listEl.innerHTML = `<div style="padding: 24px; color: var(--muted); text-align: center; background: var(--panel); border-radius: var(--radius-md); border: 1px solid var(--line);">No beaches matched your criteria. Try adjusting your search or filters.</div>`;
-    return;
-  }
-
-  listEl.innerHTML = visible.map(b => {
-    const isPopular = b.type === "popular";
-    const isSelected = currentId === b.id;
-    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lng}`;
-
-    return `
-      <button class="card ${isPopular ? '' : 'hid'}" data-id="${b.id}" ${isSelected ? 'aria-current="true"' : ''}>
-        <div class="card-header">
-          <span class="tag ${isPopular ? '' : 'hid'}">${isPopular ? 'Popular' : 'Underrated'}</span>
-          <h3>${b.name}</h3>
-        </div>
-        <div class="meta">
-          <div class="meta-item">📍 ${b.area}</div>
-          <div class="meta-item">🌐 ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</div>
-        </div>
-        <p>${b.note}</p>
-        <div class="card-footer">
-          <div class="action-priority"><b>Priority Action:</b> ${b.action}</div>
-          <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="directions-btn" onclick="event.stopPropagation();">
-            🗺️ Get Directions ↗
-          </a>
-        </div>
-      </button>
-    `;
-  }).join("");
-
-  listEl.querySelectorAll(".card").forEach(card => {
-    card.onclick = () => {
-      const id = card.dataset.id;
-      selectBeach(id, true);
-      if (window.innerWidth <= 900) {
-        switchMobileView("map");
-      }
-    };
-  });
-}
-
-function renderMarkers() {
-  if (!map) return;
-  const visibleIds = new Set(getFilteredBeaches().map(b => b.id));
-
-  BEACHES.forEach(b => {
-    if (visibleIds.has(b.id)) {
-      markers[b.id].addTo(map);
-    } else {
-      map.removeLayer(markers[b.id]);
-    }
-  });
-
-  const activePoints = getFilteredBeaches().map(b => [b.lat, b.lng]);
-  if (activePoints.length) {
-    map.fitBounds(activePoints, { padding: [40, 40], maxZoom: 12 });
-  }
-}
-
-function selectBeach(id, panMap) {
-  currentId = id;
-  const beach = BEACHES.find(x => x.id === id);
-
-  if (map && beach) {
-    if (panMap) {
-      map.flyTo([beach.lat, beach.lng], 13, { duration: 0.8 });
-    }
-    markers[id].openPopup();
-  }
-
-  renderList();
-
-  const activeCard = document.querySelector(`.card[data-id="${id}"]`);
-  if (activeCard) {
-    activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-}
-
-function switchMobileView(view) {
-  currentMobileView = view;
-  const grid = document.getElementById("contentGrid");
-  grid.setAttribute("data-view", view);
-
-  document.querySelectorAll(".toggle-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.v === view);
-  });
-
-  if (view === "map" && map) {
-    setTimeout(() => map.invalidateSize(), 100);
-  }
-}
-
-/* ---- EVENT LISTENERS ---- */
-document.getElementById("searchInput").addEventListener("input", (e) => {
-  searchQuery = e.target.value;
-  renderList();
-  renderMarkers();
-  updateLiveRegion();
-});
-
-document.querySelectorAll(".chip[data-f]").forEach(chip => {
-  chip.onclick = () => {
-    filter = chip.dataset.f;
-    document.querySelectorAll(".chip[data-f]").forEach(c => {
-      c.setAttribute("aria-pressed", c === chip);
+  function icon(b){
+    var c = COLORS[b.cat];
+    return L.divIcon({
+      className:"bm-wrap",
+      html:'<div class="bm '+cls(b)+'" data-id="'+b.id+'"><svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8.5" fill="'+c+'" stroke="#fff" stroke-width="2.5"/><circle cx="11" cy="11" r="3" fill="#0a141d"/></svg><span class="lbl">'+esc(b.name)+'</span></div>',
+      iconSize:[22,22], iconAnchor:[11,11], popupAnchor:[0,-14]
     });
-    currentId = null;
-    renderList();
-    renderMarkers();
-    updateLiveRegion();
-  };
-});
-
-document.getElementById("providerSelect").addEventListener("change", (e) => {
-  MAP_CONFIG.activeProvider = e.target.value;
-  loadMapTiles(MAP_CONFIG.activeProvider);
-});
-
-document.querySelectorAll(".toggle-btn").forEach(btn => {
-  btn.onclick = () => switchMobileView(btn.dataset.v);
-});
-
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 900 && map) {
-    map.invalidateSize();
   }
-});
+  function popupHtml(b){
+    return '<div class="pop '+cls(b)+'"><h3>'+esc(b.name)+'</h3><span class="badge" style="background:'+COLORS[b.cat]+';color:#06151c;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:999px">'+b.cat+'</span><p>'+esc(b.area)+'<br>'+b.lat.toFixed(4)+', '+b.lng.toFixed(4)+'</p><a class="gm" href="'+gmap(b)+'" target="_blank" rel="noopener">📍 View on Google Maps</a></div>';
+  }
 
-/* ---- INITIALIZATION ---- */
-renderStats();
-renderList();
-renderMarkers();
+  BEACHES.forEach(function(b){
+    var m = L.marker([b.lat,b.lng],{icon:icon(b),title:b.name,riseOnHover:true});
+    m.bindPopup(popupHtml(b));
+    m.on("click", function(){ setActive(b.id); });
+    m.on("popupclose", function(){ if (activeId === b.id) setActive(null); });
+    markers[b.id] = m;
+  });
+
+  function visible(){
+    var q = query.trim().toLowerCase();
+    return BEACHES.filter(function(b){
+      return (filter === "All" || b.cat === filter) &&
+        (!q || (b.name+" "+b.area+" "+b.cat).toLowerCase().indexOf(q) !== -1);
+    });
+  }
+  function setActive(id){
+    activeId = id;
+    document.querySelectorAll(".card").forEach(function(c){ c.classList.toggle("active", +c.dataset.id === id); });
+    document.querySelectorAll(".bm").forEach(function(e){ e.classList.toggle("active", +e.dataset.id === id); });
+    Object.keys(markers).forEach(function(k){ markers[k].setZIndexOffset(+k === id ? 1000 : 0); });
+  }
+  function fit(list){
+    if (!list.length) return;
+    map.fitBounds(L.latLngBounds(list.map(function(b){ return [b.lat,b.lng]; })),
+      {paddingTopLeft:[40,40],paddingBottomRight:[170,40],maxZoom:13});
+  }
+  function showView(v){
+    if (!matchMedia("(max-width:760px)").matches) return;
+    document.body.dataset.view = v;
+    document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("on", t.dataset.v === v); });
+    if (v === "map") setTimeout(function(){ map.invalidateSize(); }, 60);
+  }
+  function goTo(id){
+    var b = BEACHES.filter(function(x){ return x.id === id; })[0];
+    showView("map");
+    setActive(id);
+    clearTimeout(popTimer);
+    setTimeout(function(){
+      map.invalidateSize();
+      map.flyTo([b.lat,b.lng], Math.max(map.getZoom(),14), {duration:.9});
+      popTimer = setTimeout(function(){ markers[id].openPopup(); }, 1000);
+    }, 80);
+  }
+
+  function render(refit){
+    var list = visible();
+    layer.clearLayers();
+    list.forEach(function(b){ layer.addLayer(markers[b.id]); });
+    document.getElementById("count").textContent = list.length + " of " + BEACHES.length + " beaches";
+    var el = document.getElementById("list");
+    el.innerHTML = list.length ? list.map(function(b){
+      return '<article class="card '+cls(b)+'" data-id="'+b.id+'" tabindex="0">'+
+        '<div class="card-top"><h2>'+esc(b.name)+'</h2><span class="badge">'+b.cat+'</span></div>'+
+        '<p>'+esc(b.area)+'</p>'+
+        '<a class="gm" href="'+gmap(b)+'" target="_blank" rel="noopener">📍 View on Google Maps</a></article>';
+    }).join("") : '<div class="empty">No beaches match your search. Clear the search or choose All.</div>';
+
+    el.querySelectorAll(".card").forEach(function(card){
+      var id = +card.dataset.id;
+      card.addEventListener("mouseenter", function(){ setActive(id); });
+      card.addEventListener("mouseleave", function(){ if (!markers[id].isPopupOpen()) setActive(null); });
+      card.addEventListener("focus", function(){ setActive(id); });
+      card.addEventListener("click", function(e){ if (!e.target.closest("a")) goTo(id); });
+      card.addEventListener("keydown", function(e){
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goTo(id); }
+      });
+    });
+    if (refit) fit(list);
+    if (activeId) setActive(activeId);
+  }
+
+  document.querySelectorAll(".chip").forEach(function(c){
+    c.addEventListener("click", function(){
+      filter = c.dataset.f;
+      document.querySelectorAll(".chip").forEach(function(x){ x.classList.toggle("on", x === c); });
+      render(true);
+    });
+  });
+  document.getElementById("search").addEventListener("input", function(e){ query = e.target.value; render(true); });
+  document.querySelectorAll(".tab").forEach(function(t){
+    t.addEventListener("click", function(){
+      showView(t.dataset.v);
+      if (t.dataset.v === "map") setTimeout(function(){ fit(visible()); }, 120);
+    });
+  });
+  window.addEventListener("resize", function(){ map.invalidateSize(); });
+
+  map.setView([10.43,76.07],10);
+  render(false);
+  map.invalidateSize();
+  fit(BEACHES);
+}
 </script>
 </body>
 </html>
