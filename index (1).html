@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thrissur District Beaches Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--ink:#12303a;--muted:#5b7077;--bg:#eef3f2;--panel:#fff;--line:#d3dedc;--pop:#1d6d8c;--hid:#c4851a;--yes:#2f7d4f;--no:#b23a3a;--unk:#8a9a9e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.15;margin:0}
+a:focus-visible,button:focus-visible,td:focus-visible{outline:3px solid var(--pop);outline-offset:2px}
+header{padding:28px clamp(16px,4vw,48px) 8px;max-width:1400px;margin:0 auto}
+h1{font-size:clamp(28px,4vw,44px);font-weight:700}
+header p{max-width:70ch;color:var(--muted);margin:8px 0 0}
+main{max-width:1400px;margin:0 auto;padding:16px clamp(16px,4vw,48px) 48px}
+.stats{display:flex;flex-wrap:wrap;gap:12px 32px;margin:12px 0 20px}
+.stat b{font:700 28px "Bricolage Grotesque",sans-serif;display:block}
+.stat span{color:var(--muted);font-size:13px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 14px;border-radius:999px;font:inherit;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:minmax(280px,380px) 1fr;gap:16px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+#list{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow:auto;padding-right:4px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:6px solid var(--pop);border-radius:6px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.card.hid{border-left-color:var(--hid)}
+.card[aria-current=true]{box-shadow:0 0 0 2px var(--ink)}
+.card h3{font-size:18px}
+.card small{color:var(--muted)}
+.card p{margin:6px 0 0;font-size:14px}
+.tag{display:inline-block;font-size:12px;font-weight:500;padding:1px 8px;border-radius:4px;color:#fff;background:var(--pop);margin-left:6px;vertical-align:2px}
+.tag.hid{background:var(--hid)}
+#map{height:640px;border:1px solid var(--line);border-radius:6px;background:#cfe0e3}
+@media(max-width:860px){#map{height:420px}#list{max-height:none}}
+section{margin-top:36px}
+section h2{font-size:24px;margin-bottom:4px}
+section>p{color:var(--muted);margin:0 0 12px;max-width:80ch}
+.notes{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px;font-size:14px;color:var(--muted)}
+.notes li{margin:4px 0}
+footer{color:var(--muted);font-size:13px;margin-top:28px}
+.leaflet-popup-content{font:14px/1.45 "IBM Plex Sans",sans-serif}
+.leaflet-popup-content b{font-family:"Bricolage Grotesque",sans-serif;font-size:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Thrissur district beaches</h1>
+  <p>Popular and underrated beaches along the district's coastline, with their locations on the map.</p>
+</header>
+<main>
+  <div class="stats" id="stats"></div>
+
+  <div class="bar" role="group" aria-label="Filter beaches">
+    <button class="chip" data-f="all" aria-pressed="true">All beaches</button>
+    <button class="chip" data-f="popular" aria-pressed="false">Popular</button>
+    <button class="chip" data-f="underrated" aria-pressed="false">Underrated</button>
+  </div>
+
+  <div class="grid">
+    <div id="list" aria-label="Beach list"></div>
+    <div id="map" role="application" aria-label="Map of Thrissur district beaches"></div>
+  </div>
+
+  <section>
+    <h2>Notes on the data</h2>
+    <ul class="notes">
+      <li>Coordinates are approximate, placed from general knowledge of the coastline. Confirm each one on site with GPS and edit <code>lat</code> and <code>lng</code> in <code>BEACHES</code>.</li>
+      <li>"Popular" and "underrated" are qualitative labels for planning. Replace them with the district's own footfall figures (DTPC counts, panchayat records) when available.</li>
+      <li>The monsoon months (roughly June to September) bring rough seas and rip currents along the Kerala coast. Check current IMD and KSDMA advisories before opening any beach for visitors.</li>
+    </ul>
+  </section>
+  <footer>Map data &copy; OpenStreetMap contributors. Built with Leaflet.</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ---- EDIT HERE: one object per beach ---- */
+const BEACHES = [
+  {id:"snehatheeram", name:"Snehatheeram (Nattika)", area:"Nattika", lat:10.400, lng:76.090, type:"popular",
+   note:"Long, wide stretch popular for sunset visits and family outings. Close to Thrissur town, so it sees the heaviest weekend crowds in the district.",
+   action:"Crowd management on weekends and holidays; lifeguard cover."},
+  {id:"chavakkad", name:"Chavakkad Beach", area:"Chavakkad", lat:10.573, lng:76.004, type:"popular",
+   note:"Well-known town beach with a steady local and tourist footfall, near Guruvayur pilgrim traffic.",
+   action:"Sea-safety signage, lighting and waste handling."},
+  {id:"blangad", name:"Blangad Beach", area:"Chavakkad / Guruvayur", lat:10.596, lng:76.001, type:"popular",
+   note:"Quieter neighbour of Chavakkad Beach, used for evening walks and local events.",
+   action:"Shared patrol and lifeguard plan with Chavakkad."},
+  {id:"vadanappally", name:"Vadanappally Beach", area:"Vadanappally", lat:10.450, lng:76.075, type:"underrated",
+   note:"Calm, uncrowded shoreline with room for low-impact tourism. Few visitors from outside the area.",
+   action:"Access road, parking and basic amenities before promotion."},
+  {id:"chettuva", name:"Chettuva Beach", area:"Chettuva", lat:10.520, lng:76.042, type:"underrated",
+   note:"Fishing-community coast near the Chettuva estuary and backwaters; could pair beach visits with backwater experiences.",
+   action:"Community-led visitor plan; safe landing and viewing points."},
+  {id:"kaipamangalam", name:"Kaipamangalam Beach", area:"Kaipamangalam", lat:10.300, lng:76.120, type:"underrated",
+   note:"Quiet southern beach with minimal development, within reach of Kodungallur's heritage sites.",
+   action:"Survey of access, safety and cleanliness; link to heritage circuit."},
+  {id:"azheekode", name:"Azheekode (Munakkal) Beach", area:"Azheekode", lat:10.198, lng:76.169, type:"underrated",
+   note:"Southernmost beach of the district, near the Muziris heritage area and the Azheekode lighthouse.",
+   action:"Include in Muziris tourism circuit; add signage and parking."}
+];
+/* ----------------------------------------- */
+
+let filter="all", current=null;
+
+const HAS_MAP=typeof L!=="undefined";
+const colour=t=>t==="popular"?"#1d6d8c":"#c4851a";
+const markers={};
+let map=null;
+if(HAS_MAP){
+  map=L.map("map",{scrollWheelZoom:false}).setView([10.43,76.07],9);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:19,attribution:"&copy; OpenStreetMap contributors &copy; CARTO"}).addTo(map);
+  map.on("focus",()=>map.scrollWheelZoom.enable());map.on("blur",()=>map.scrollWheelZoom.disable());
+  BEACHES.forEach(b=>{
+    const m=L.circleMarker([b.lat,b.lng],{radius:10,color:"#fff",weight:2,fillColor:colour(b.type),fillOpacity:.95}).addTo(map);
+    m.bindPopup(`<b>${b.name}</b><br>${b.area}<br><i>${b.type==="popular"?"Popular":"Underrated"}</i><br>${b.note}`);
+    m.on("click",()=>select(b.id,false));
+    markers[b.id]=m;
+  });
+}else{
+  document.getElementById("map").innerHTML="<p style='padding:16px'>The map could not load. Check your internet connection and reload. The beach list still works.</p>";
+}
+
+function visible(){return BEACHES.filter(b=>filter==="all"||b.type===filter)}
+
+function renderStats(){
+  document.getElementById("stats").innerHTML=
+    `<div class="stat"><b>${BEACHES.length}</b><span>beaches mapped</span></div>
+     <div class="stat"><b>${BEACHES.filter(b=>b.type==="popular").length}</b><span>popular</span></div>
+     <div class="stat"><b>${BEACHES.filter(b=>b.type==="underrated").length}</b><span>underrated</span></div>`;
+}
+
+function renderList(){
+  const el=document.getElementById("list");
+  el.innerHTML=visible().map(b=>`
+    <button class="card ${b.type==="underrated"?"hid":""}" data-id="${b.id}" ${current===b.id?'aria-current="true"':""}>
+      <h3>${b.name}<span class="tag ${b.type==="underrated"?"hid":""}">${b.type==="popular"?"Popular":"Underrated"}</span></h3>
+      <small>${b.area} &middot; ${b.lat.toFixed(3)}, ${b.lng.toFixed(3)}</small>
+      <p>${b.note}</p>
+      <p><b>Priority:</b> ${b.action}</p>
+    </button>`).join("");
+  el.querySelectorAll(".card").forEach(c=>c.onclick=()=>select(c.dataset.id,true));
+}
+
+function renderMarkers(){
+  if(!map)return;
+  const ids=new Set(visible().map(b=>b.id));
+  BEACHES.forEach(b=>{ids.has(b.id)?markers[b.id].addTo(map):map.removeLayer(markers[b.id])});
+  const pts=visible().map(b=>[b.lat,b.lng]);
+  if(pts.length) map.fitBounds(pts,{padding:[40,40],maxZoom:11});
+}
+
+function select(id,fly){
+  current=id;const b=BEACHES.find(x=>x.id===id);
+  if(map&&fly) map.flyTo([b.lat,b.lng],14,{duration:.8});
+  if(map)markers[id].openPopup();
+  renderList();
+}
+
+document.querySelectorAll(".chip[data-f]").forEach(c=>c.onclick=()=>{
+  filter=c.dataset.f;
+  document.querySelectorAll(".chip[data-f]").forEach(x=>x.setAttribute("aria-pressed",x===c));
+  current=null;renderList();renderMarkers();
+});
+
+renderStats();renderList();renderMarkers();
+</script>
+</body>
+</html>
