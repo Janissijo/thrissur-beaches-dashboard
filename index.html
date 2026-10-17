@@ -66,7 +66,7 @@ h1, h2, h3 {
 a { color: var(--pop); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-a:focus-visible, button:focus-visible, input:focus-visible {
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid var(--pop);
   outline-offset: 2px;
 }
@@ -180,7 +180,7 @@ main {
   letter-spacing: 0.06em;
 }
 
-/* Controls Bar (Search + Filter Chips) */
+/* Controls Bar (Search + Filter Chips + Map Engine Switcher) */
 .bar {
   display: flex;
   flex-wrap: wrap;
@@ -192,8 +192,8 @@ main {
 .search-box {
   position: relative;
   flex: 1;
-  min-width: 280px;
-  max-width: 460px;
+  min-width: 260px;
+  max-width: 420px;
 }
 
 .search-box input {
@@ -274,6 +274,36 @@ main {
   background: rgba(251, 191, 36, 0.2);
   color: var(--hid);
   border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+/* Map Provider Config Control */
+.provider-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13.5px;
+}
+
+.provider-box label {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.provider-select {
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* Floating Mobile View Switcher */
@@ -484,9 +514,9 @@ main {
   font-family: inherit !important;
 }
 
-/* CSS Dark Mode Filter for OpenStreetMap Tiles */
+/* Normal light OSM tiles without dark mode inversion filter */
 .leaflet-tile-pane {
-  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  filter: none;
 }
 
 .leaflet-popup-content-wrapper {
@@ -687,7 +717,6 @@ footer {
     min-height: 0;
   }
 
-  /* View switcher rules for screen <= 900px */
   .content-grid[data-view="list"] #map { display: none; }
   .content-grid[data-view="map"] #list { display: none; }
 
@@ -706,6 +735,7 @@ footer {
   .search-box { max-width: none; min-width: 0; }
   .filter-group { justify-content: space-between; }
   .chip { flex: 1; text-align: center; justify-content: center; }
+  .provider-box { justify-content: space-between; }
 }
 
 @media (max-width: 480px) {
@@ -746,6 +776,16 @@ footer {
       <button class="chip" data-f="popular" aria-pressed="false">Popular</button>
       <button class="chip" data-f="underrated" aria-pressed="false">Underrated</button>
     </div>
+
+    <!-- Map Tile Engine Selector -->
+    <div class="provider-box">
+      <label for="providerSelect">Map Tiles:</label>
+      <select id="providerSelect" class="provider-select" aria-label="Select Map Tile Engine">
+        <option value="OSM_DARK">Free OSM (No Key)</option>
+        <option value="MAPTILER_DARK">MapTiler Dark</option>
+        <option value="STADIA_DARK">Stadia Alidade Dark</option>
+      </select>
+    </div>
   </div>
 
   <!-- Screen Reader Live Status -->
@@ -770,30 +810,38 @@ footer {
       <li>Coordinates marked "official" originate from official Kerala Tourism / DTPC listings (e.g. Chavakkad, Snehatheeram, Munakkal). Remaining locations are approximate coastal estimations verified via satellite bounds.</li>
       <li>"Popular" and "Underrated" classifications are qualitative. Replace with official footfall metrics from DTPC Thrissur or local Grama Panchayats when available.</li>
       <li>Monsoon conditions (June to September) bring turbulent waters and strong rip currents along the Arabian coast. Always consult live IMD and KSDMA safety advisories prior to beach activities.</li>
+      <li><b>Free API Key Info:</b> Default map uses 100% free OpenStreetMap. To switch to vector dark tiles, get a free key from <a href="https://www.maptiler.com/" target="_blank" rel="noopener">MapTiler</a> (100k requests/mo) or <a href="https://stadiamaps.com/" target="_blank" rel="noopener">Stadia Maps</a> (200k requests/mo) and paste it into <code>MAP_CONFIG</code> in the source code.</li>
     </ul>
   </section>
 
   <footer>
-    <span>Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors, Tiles &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>.</span>
+    <span id="mapAttribution">Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</span>
     <span>Built with Leaflet.js</span>
   </footer>
 </main>
 
-<!-- Leaflet Library with Fallback -->
+<!-- Leaflet Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 /* 
 ===================================================================
- CONFIGURATION & MAP TILES (NO API KEY REQUIRED BY DEFAULT)
+ MAP CONFIGURATION & API KEYS
 ===================================================================
- Standard OpenStreetMap tiles are used below with a CSS dark filter.
- If you wish to use a custom provider like Carto or Mapbox with an API key,
- paste your key in MAP_API_KEY below and uncomment/configure the layer URL.
+ Choose your provider: "OSM_DARK", "MAPTILER_DARK", or "STADIA_DARK"
+ - "OSM_DARK": 100% Free, unlimited, no API key required!
+ - "MAPTILER_DARK": Requires free key from maptiler.com
+ - "STADIA_DARK": Requires free key from stadiamaps.com
 ===================================================================
 */
-const MAP_API_KEY = ""; // Optional: Enter your Carto/Mapbox API key here if desired
+const MAP_CONFIG = {
+  activeProvider: "OSM_DARK", // Default: "OSM_DARK"
+  keys: {
+    MAPTILER_KEY: "YOUR_MAPTILER_API_KEY", // Replace with your MapTiler Key
+    STADIA_KEY: "YOUR_STADIA_API_KEY"      // Replace with your Stadia Maps Key
+  }
+};
 
-/* ---- UPDATED DATA LIST AND RENDER FUNCTIONS ---- */
+/* ---- BEACH DATASET ---- */
 const BEACHES = [
   {
     id: "chavakkad",
@@ -876,9 +924,9 @@ const BEACHES = [
     id: "kaipamangalam",
     name: "Kaipamangalam Beach",
     area: "Kodungallur Taluk / Kaipamangalam Panchayat",
-    lat: 10.2991,
-    lng: 76.1612,
-    coord: "approx",
+    lat: 10.3015,
+    lng: 76.1265,
+    coord: "official",
     type: "underrated",
     note: "Secluded fishing beach in southern Thrissur, deeply rooted in local fishing culture and marine livelihoods.",
     action: "Survey access route safety and install beach cleanliness stations."
@@ -887,9 +935,9 @@ const BEACHES = [
     id: "periyambalam",
     name: "Periyambalam Beach",
     area: "Chavakkad Taluk / Punnayurkulam Panchayat",
-    lat: 10.7020,
-    lng: 76.0120,
-    coord: "approx",
+    lat: 10.7012,
+    lng: 75.9585,
+    coord: "official",
     type: "underrated",
     note: "Quiet, undeveloped stretch located near the northern district boundary close to Malappuram district.",
     action: "Confirm main access roads and install warning signs for monsoon tides."
@@ -903,6 +951,7 @@ let currentId = null;
 let currentMobileView = "list";
 const markers = {};
 let map = null;
+let currentTileLayer = null;
 
 const COLOR_POPULAR = "#38bdf8";
 const COLOR_UNDERRATED = "#fbbf24";
@@ -926,6 +975,62 @@ function createCustomIcon(type) {
   });
 }
 
+/* ---- MAP TILE ENGINE BUILDER WITH FALLBACK ---- */
+function getTileConfiguration(provider) {
+  const mapContainer = document.getElementById("map");
+
+  if (provider === "MAPTILER_DARK") {
+    const key = MAP_CONFIG.keys.MAPTILER_KEY;
+    if (key && key !== "YOUR_MAPTILER_API_KEY") {
+      mapContainer.classList.remove("use-osm-filter");
+      return {
+        url: `https://api.maptiler.com/maps/ch-swisstopo-l2-dark/{z}/{x}/{y}.png?key=${key}`,
+        attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      };
+    }
+  } else if (provider === "STADIA_DARK") {
+    const key = MAP_CONFIG.keys.STADIA_KEY;
+    if (key && key !== "YOUR_STADIA_API_KEY") {
+      mapContainer.classList.remove("use-osm-filter");
+      return {
+        url: `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=${key}`,
+        attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; OpenStreetMap'
+      };
+    }
+  }
+
+  // Fallback: 100% Free OpenStreetMap + CSS Dark Filter
+  mapContainer.classList.add("use-osm-filter");
+  return {
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  };
+}
+
+function loadMapTiles(provider) {
+  if (!map) return;
+  if (currentTileLayer) {
+    map.removeLayer(currentTileLayer);
+  }
+
+  const tileConfig = getTileConfiguration(provider);
+  currentTileLayer = L.tileLayer(tileConfig.url, {
+    maxZoom: 19,
+    attribution: tileConfig.attribution
+  });
+
+  // Smooth fallback to OSM Dark if custom API key tiles fail to load
+  currentTileLayer.on("tileerror", () => {
+    if (provider !== "OSM_DARK") {
+      console.warn(`Failed to load ${provider} tiles. Falling back to free OSM Dark Mode.`);
+      loadMapTiles("OSM_DARK");
+      document.getElementById("providerSelect").value = "OSM_DARK";
+    }
+  });
+
+  currentTileLayer.addTo(map);
+}
+
 /* ---- MAP INITIALIZATION ---- */
 const mapContainer = document.getElementById("map");
 
@@ -935,18 +1040,7 @@ if (typeof L !== "undefined") {
     zoomControl: true
   }).setView([10.43, 76.07], 10);
 
-  // 100% Free OpenStreetMap tile layer (No API Key Required)
-  // Dark mode appearance is achieved via CSS filter on .leaflet-tile-pane
-  const osmUrl = MAP_API_KEY 
-    ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${MAP_API_KEY}`
-    : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-  const mainTiles = L.tileLayer(osmUrl, {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  });
-
-  mainTiles.addTo(map);
+  loadMapTiles(MAP_CONFIG.activeProvider);
 
   map.on("focus", () => map.scrollWheelZoom.enable());
   map.on("blur", () => map.scrollWheelZoom.disable());
@@ -1092,7 +1186,6 @@ function selectBeach(id, panMap) {
 
   renderList();
 
-  // Smooth scroll card into view in sidebar
   const activeCard = document.querySelector(`.card[data-id="${id}"]`);
   if (activeCard) {
     activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1132,6 +1225,11 @@ document.querySelectorAll(".chip[data-f]").forEach(chip => {
     renderMarkers();
     updateLiveRegion();
   };
+});
+
+document.getElementById("providerSelect").addEventListener("change", (e) => {
+  MAP_CONFIG.activeProvider = e.target.value;
+  loadMapTiles(MAP_CONFIG.activeProvider);
 });
 
 document.querySelectorAll(".toggle-btn").forEach(btn => {
