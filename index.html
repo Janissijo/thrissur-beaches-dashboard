@@ -401,11 +401,18 @@ main {
   gap: 6px;
 }
 
+/* Truncate long card notes to prevent UI clutter */
 .card p {
   margin: 0;
   font-size: 14px;
   color: #cbd5e1;
   line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* show max 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .card-footer {
@@ -461,6 +468,9 @@ main {
   white-space: nowrap;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tag.hid {
@@ -491,6 +501,9 @@ main {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow) !important;
   padding: 6px;
+  max-width: 320px !important;
+  word-break: break-word !important;
+  white-space: normal !important;
 }
 
 .leaflet-popup-tip {
@@ -502,11 +515,11 @@ main {
   margin: 12px 16px !important;
   font-size: 13.5px !important;
   line-height: 1.55 !important;
-  min-width: 240px;
+  min-width: 220px;
   max-width: 320px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: block !important;
+  white-space: normal !important;
+  word-break: break-word !important;
 }
 
 .popup-title {
@@ -1026,18 +1039,18 @@ function renderList() {
     return `
       <button class="card ${isPopular ? '' : 'hid'}" data-id="${b.id}" ${isSelected ? 'aria-current="true"' : ''}>
         <div class="card-header">
-          <span class="tag ${isPopular ? '' : 'hid'}">${isPopular ? 'Popular' : 'Underrated'}</span>
           <h3>${b.name}</h3>
+          <span class="tag ${isPopular ? '' : 'hid'}">${isPopular ? 'Popular' : 'Underrated'}</span>
         </div>
         <div class="meta">
-          <div class="meta-item">📍 ${b.area}</div>
-          <div class="meta-item">🌐 ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</div>
+          <span>📍 ${b.area}</span> &bull; 
+          <span>${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</span>
         </div>
         <p>${b.note}</p>
         <div class="card-footer">
-          <div class="action-priority"><b>Priority Action:</b> ${b.action}</div>
+          <div class="action-priority"><b>Priority:</b> ${b.action}</div>
           <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="directions-btn" onclick="event.stopPropagation();">
-            🗺️ Get Directions ↗
+            Directions ↗
           </a>
         </div>
       </button>
@@ -1060,15 +1073,22 @@ function renderMarkers() {
   const visibleIds = new Set(getFilteredBeaches().map(b => b.id));
 
   BEACHES.forEach(b => {
+    if (!markers[b.id]) return; // safety
     if (visibleIds.has(b.id)) {
-      markers[b.id].addTo(map);
+      if (!map.hasLayer(markers[b.id])) markers[b.id].addTo(map);
     } else {
-      map.removeLayer(markers[b.id]);
+      if (map.hasLayer(markers[b.id])) map.removeLayer(markers[b.id]);
     }
   });
 
   const activePoints = getFilteredBeaches().map(b => [b.lat, b.lng]);
-  if (activePoints.length) {
+
+  if (activePoints.length === 1) {
+    // center on single point with a sensible zoom
+    const pt = activePoints[0];
+    const zoom = Math.max(12, map.getZoom() || 13);
+    map.setView(pt, zoom);
+  } else if (activePoints.length > 1) {
     map.fitBounds(activePoints, { padding: [40, 40], maxZoom: 12 });
   }
 }
@@ -1081,7 +1101,7 @@ function selectBeach(id, panMap) {
     if (panMap) {
       map.flyTo([beach.lat, beach.lng], 13, { duration: 0.8 });
     }
-    markers[id].openPopup();
+    if (markers[id]) markers[id].openPopup();
   }
 
   renderList();
@@ -1103,7 +1123,11 @@ function switchMobileView(view) {
   });
 
   if (view === "map" && map) {
-    setTimeout(() => map.invalidateSize(), 100);
+    // allow CSS/layout changes to apply then invalidate and re-fit
+    setTimeout(() => {
+      map.invalidateSize();
+      renderMarkers();
+    }, 150);
   }
 }
 
