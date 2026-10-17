@@ -401,18 +401,11 @@ main {
   gap: 6px;
 }
 
-/* Truncate long card notes to prevent UI clutter */
 .card p {
   margin: 0;
   font-size: 14px;
   color: #cbd5e1;
   line-height: 1.55;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* show max 3 lines */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;
 }
 
 .card-footer {
@@ -468,9 +461,6 @@ main {
   white-space: nowrap;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .tag.hid {
@@ -494,6 +484,11 @@ main {
   font-family: inherit !important;
 }
 
+/* CSS Dark Mode Filter for OpenStreetMap Tiles */
+.leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
 .leaflet-popup-content-wrapper {
   background: var(--panel) !important;
   color: var(--ink) !important;
@@ -501,9 +496,6 @@ main {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow) !important;
   padding: 6px;
-  max-width: 320px !important;
-  word-break: break-word !important;
-  white-space: normal !important;
 }
 
 .leaflet-popup-tip {
@@ -515,11 +507,11 @@ main {
   margin: 12px 16px !important;
   font-size: 13.5px !important;
   line-height: 1.55 !important;
-  min-width: 220px;
+  min-width: 240px;
   max-width: 320px;
-  display: block !important;
-  white-space: normal !important;
-  word-break: break-word !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .popup-title {
@@ -790,6 +782,17 @@ footer {
 <!-- Leaflet Library with Fallback -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
+/* 
+===================================================================
+ CONFIGURATION & MAP TILES (NO API KEY REQUIRED BY DEFAULT)
+===================================================================
+ Standard OpenStreetMap tiles are used below with a CSS dark filter.
+ If you wish to use a custom provider like Carto or Mapbox with an API key,
+ paste your key in MAP_API_KEY below and uncomment/configure the layer URL.
+===================================================================
+*/
+const MAP_API_KEY = ""; // Optional: Enter your Carto/Mapbox API key here if desired
+
 /* ---- UPDATED DATA LIST AND RENDER FUNCTIONS ---- */
 const BEACHES = [
   {
@@ -932,28 +935,18 @@ if (typeof L !== "undefined") {
     zoomControl: true
   }).setView([10.43, 76.07], 10);
 
-  // CartoDB Dark Matter tile layer
-  const darkTiles = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  // 100% Free OpenStreetMap tile layer (No API Key Required)
+  // Dark mode appearance is achieved via CSS filter on .leaflet-tile-pane
+  const osmUrl = MAP_API_KEY 
+    ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${MAP_API_KEY}`
+    : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  const mainTiles = L.tileLayer(osmUrl, {
     maxZoom: 19,
-    subdomains: "abcd",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   });
 
-  // Backup OpenStreetMap layer
-  const backupTiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: "&copy; OpenStreetMap contributors"
-  });
-
-  darkTiles.addTo(map);
-
-  let tileErrors = 0;
-  darkTiles.on("tileerror", () => {
-    if (++tileErrors === 3) {
-      map.removeLayer(darkTiles);
-      backupTiles.addTo(map);
-    }
-  });
+  mainTiles.addTo(map);
 
   map.on("focus", () => map.scrollWheelZoom.enable());
   map.on("blur", () => map.scrollWheelZoom.disable());
@@ -1039,18 +1032,18 @@ function renderList() {
     return `
       <button class="card ${isPopular ? '' : 'hid'}" data-id="${b.id}" ${isSelected ? 'aria-current="true"' : ''}>
         <div class="card-header">
-          <h3>${b.name}</h3>
           <span class="tag ${isPopular ? '' : 'hid'}">${isPopular ? 'Popular' : 'Underrated'}</span>
+          <h3>${b.name}</h3>
         </div>
         <div class="meta">
-          <span>📍 ${b.area}</span> &bull; 
-          <span>${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</span>
+          <div class="meta-item">📍 ${b.area}</div>
+          <div class="meta-item">🌐 ${b.lat.toFixed(4)}, ${b.lng.toFixed(4)} (${b.coord === "official" ? "Official GPS" : "Approx."})</div>
         </div>
         <p>${b.note}</p>
         <div class="card-footer">
-          <div class="action-priority"><b>Priority:</b> ${b.action}</div>
+          <div class="action-priority"><b>Priority Action:</b> ${b.action}</div>
           <a href="${googleMapsUrl}" target="_blank" rel="noopener" class="directions-btn" onclick="event.stopPropagation();">
-            Directions ↗
+            🗺️ Get Directions ↗
           </a>
         </div>
       </button>
@@ -1073,22 +1066,15 @@ function renderMarkers() {
   const visibleIds = new Set(getFilteredBeaches().map(b => b.id));
 
   BEACHES.forEach(b => {
-    if (!markers[b.id]) return; // safety
     if (visibleIds.has(b.id)) {
-      if (!map.hasLayer(markers[b.id])) markers[b.id].addTo(map);
+      markers[b.id].addTo(map);
     } else {
-      if (map.hasLayer(markers[b.id])) map.removeLayer(markers[b.id]);
+      map.removeLayer(markers[b.id]);
     }
   });
 
   const activePoints = getFilteredBeaches().map(b => [b.lat, b.lng]);
-
-  if (activePoints.length === 1) {
-    // center on single point with a sensible zoom
-    const pt = activePoints[0];
-    const zoom = Math.max(12, map.getZoom() || 13);
-    map.setView(pt, zoom);
-  } else if (activePoints.length > 1) {
+  if (activePoints.length) {
     map.fitBounds(activePoints, { padding: [40, 40], maxZoom: 12 });
   }
 }
@@ -1101,7 +1087,7 @@ function selectBeach(id, panMap) {
     if (panMap) {
       map.flyTo([beach.lat, beach.lng], 13, { duration: 0.8 });
     }
-    if (markers[id]) markers[id].openPopup();
+    markers[id].openPopup();
   }
 
   renderList();
@@ -1123,11 +1109,7 @@ function switchMobileView(view) {
   });
 
   if (view === "map" && map) {
-    // allow CSS/layout changes to apply then invalidate and re-fit
-    setTimeout(() => {
-      map.invalidateSize();
-      renderMarkers();
-    }, 150);
+    setTimeout(() => map.invalidateSize(), 100);
   }
 }
 
